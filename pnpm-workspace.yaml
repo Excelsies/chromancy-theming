@@ -1,0 +1,4 @@
+# Single-package repo; this file only carries pnpm settings.
+overrides:
+  # GHSA-g3hv-75wg-m249: eslint 10.14 pulls minimatch 10.x; 11.0.1+ is patched.
+  minimatch: 11.0.4

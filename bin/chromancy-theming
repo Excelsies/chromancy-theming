@@ -1,0 +1,2 @@
+#!/usr/bin/env -S gjs -m
+import '../app/main.js';

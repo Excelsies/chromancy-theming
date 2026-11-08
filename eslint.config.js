@@ -3,6 +3,7 @@ import globals from 'globals';
 
 // GJS globals available to the app and inside GNOME Shell.
 const gjsGlobals = {
+    ARGV: 'readonly',
     global: 'readonly',
     imports: 'readonly',
     log: 'readonly',

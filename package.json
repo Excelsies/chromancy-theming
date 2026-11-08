@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "test": "node --test \"tests/**/*.test.js\"",
     "test:gjs": "for f in tests/gjs/*.gjs.js; do GSETTINGS_BACKEND=memory gjs -m \"$f\" || exit 1; done",
-    "check": "pnpm run lint && pnpm test && pnpm run test:gjs"
+    "check": "pnpm run lint && pnpm test && pnpm run test:gjs",
+    "test:display": "tools/display-test.sh"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

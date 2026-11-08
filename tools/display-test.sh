@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Runs each tests/display/*.gjs.js inside its own headless Weston compositor and private D-Bus
+# session, with a temporary XDG_CONFIG_HOME and in-memory GSettings, so nothing reaches the
+# user's desktop, config or settings. Usage: tools/display-test.sh [script...]
+set -euo pipefail
+cd "$(dirname "$0")/.."
+command -v weston >/dev/null || { echo "display tests need weston" >&2; exit 2; }
+scripts=("$@")
+[ ${#scripts[@]} -eq 0 ] && scripts=(tests/display/*.gjs.js)
+status=0
+for script in "${scripts[@]}"; do
+    tmp=$(mktemp -d -t chromancy-display-XXXXXX)
+    socket="wl-chromancy-$$-$RANDOM"
+    # GSETTINGS_BACKEND covers the whole private session, so services it starts (portals) never
+    # read or write the user's settings either.
+    if GSETTINGS_BACKEND=memory timeout --kill-after=5 120 dbus-run-session -- bash -c '
+        weston --backend=headless --renderer=pixman --socket="$1" --idle-time=0 >"$2/weston.log" 2>&1 &
+        weston_pid=$!
+        trap "kill $weston_pid 2>/dev/null" EXIT
+        for _ in $(seq 100); do [ -S "$XDG_RUNTIME_DIR/$1" ] && break; sleep 0.1; done
+        [ -S "$XDG_RUNTIME_DIR/$1" ] || { echo "weston did not start: $(cat "$2/weston.log")" >&2; exit 2; }
+        WAYLAND_DISPLAY="$1" GDK_BACKEND=wayland CHROMANCY_TEST_TMP="$2" \
+            gjs -m "$3" 2>"$2/stderr.log"
+    ' _ "$socket" "$tmp" "$script" 2>"$tmp/session.log"; then
+        :
+    else
+        status=1
+        echo "FAIL: $script (stderr below)" >&2
+        cat "$tmp/stderr.log" >&2 || true
+        grep -vE 'dbus-daemon|portal|SpiRegistry|fusermount|keyring|^$' "$tmp/session.log" >&2 || true
+    fi
+    rm -rf "$tmp"
+done
+exit $status

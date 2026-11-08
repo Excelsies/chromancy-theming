@@ -1,6 +1,7 @@
 // Automation script for tools/ui-preview.sh: opens real apps and the main shell views in a headless
 // shell and saves screenshots to $CHROMANCY_SHOT_DIR, named with $CHROMANCY_SHOT_PREFIX.
-// $CHROMANCY_PREVIEW_APPS (comma-separated app ids) limits the apps.
+// $CHROMANCY_PREVIEW_APPS (comma-separated app ids) limits the apps; Chromancy Theming itself is captured
+// when its launcher is installed in the sandbox (tools/screenshots.sh does that).
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
@@ -13,9 +14,13 @@ Gio._promisify(Shell.Screenshot.prototype, 'screenshot_area');
 const OUT = GLib.getenv('CHROMANCY_SHOT_DIR');
 const PREFIX = GLib.getenv('CHROMANCY_SHOT_PREFIX') ?? '';
 const SAMPLE = `${GLib.get_home_dir()}/example.js`;
-/** [app id, screenshot name, command line arguments] (Settings opens on a page with nothing personal). */
+/**
+ * [app id, screenshot name, command line arguments]. Settings opens on Appearance, a page with nothing
+ * personal; with a panel id it does not know it falls back to Wi-Fi, which lists nearby networks.
+ */
 const APPS = [
-    ['org.gnome.Settings', 'settings', ['appearance']],
+    ['io.github.excelsies.ChromancyTheming', 'chromancy', []],
+    ['org.gnome.Settings', 'settings', ['background']],
     ['org.gnome.Nautilus', 'files', []],
     ['org.gnome.TextEditor', 'text-editor', [SAMPLE]],
     ['org.gnome.Calculator', 'calculator', []],

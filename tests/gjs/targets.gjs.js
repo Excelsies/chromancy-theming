@@ -51,14 +51,16 @@ conjureSettings.set_string('theme-primary', '#123456');  // the user's own Conju
 write(`${ctx.paths.config}/qt6ct/qt6ct.conf`, '[Appearance]\nstyle=Fusion\n');
 write(`${ctx.paths.config}/btop/btop.conf`, '#? Config file for btop\ncolor_theme = "jeweltone"\ntheme_background = false\n');
 write(`${ctx.paths.data}/flatpak/overrides/global`, '[Context]\nfilesystems=xdg-download;\n');
-new Gio.Settings({ schema_id: 'org.gnome.Ptyxis' }).set_string('default-profile-uuid', 'test-profile');
+// Ptyxis's settings exist only where it is installed, like the checks that read them below.
+const has = name => GLib.find_program_in_path(name) !== null;
+if (has('ptyxis'))
+    new Gio.Settings({ schema_id: 'org.gnome.Ptyxis' }).set_string('default-profile-uuid', 'test-profile');
 write(`${ctx.userTemplates}/kitty.tmpl`, 'chromancy-output: ~/.config/kitty/chromancy.conf\nbackground {{term-background}}\nforeground {{term-foreground}}\n');
 
 const { palettes } = loadPalettes(ctx);
 const targets = ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates'];
 let r = await applyPalette(palettes.get('jeweltone-dark'), targets, ctx);
 const by = t => r.results.filter(x => x.target === t);
-const has = name => GLib.find_program_in_path(name) !== null;
 lines.push(`# ${r.results.map(x => `${x.target}:${x.status}`).join(', ')}`);
 check(!r.results.some(x => x.status === 'failed'), `nothing failed (${r.results.filter(x => x.status === 'failed').map(x => `${x.target}: ${x.error}`).join('; ')})`);
 

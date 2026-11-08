@@ -5,14 +5,19 @@ on:
 jobs:
   check:
     runs-on: ubuntu-24.04
+    # The platform Chromancy supports, with its GJS: the Yaru build relies on GJS 1.86 or later.
+    container: ubuntu:26.04
     steps:
+      - run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates git \
+            libglib2.0-bin gjs gir1.2-rsvg-2.0 sassc gsettings-desktop-schemas nodejs npm
       - uses: actions/checkout@v4
-      # Version comes from package.json "packageManager".
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglib2.0-bin gjs gir1.2-rsvg-2.0 sassc gsettings-desktop-schemas
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
+      # The version comes from package.json "packageManager". The checks run as an ordinary user: as root,
+      # the tests that make a file unwritable could not make a write fail.
+      - run: |
+          npm install -g "$(node -p 'require("./package.json").packageManager')"
+          useradd -m ci
+          chown -R ci "$GITHUB_WORKSPACE"
+          runuser -u ci -- pnpm install --frozen-lockfile
+          runuser -u ci -- pnpm run check

@@ -1,0 +1,10 @@
+{
+    "uuid": "chromancy-theming@excelsies",
+    "name": "Chromancy Theming",
+    "description": "Shell side of Chromancy Theming: loads the GNOME Shell theme Chromancy rebuilds with your palette, and lets Chromancy identify an app by a click on one of its windows.",
+    "shell-version": [
+        "50"
+    ],
+    "url": "https://github.com/Excelsies/chromancy-theming",
+    "version-name": "0.1.0"
+}

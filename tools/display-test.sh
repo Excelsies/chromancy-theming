@@ -11,9 +11,12 @@ status=0
 for script in "${scripts[@]}"; do
     tmp=$(mktemp -d -t chromancy-display-XXXXXX)
     socket="wl-chromancy-$$-$RANDOM"
+    # A private runtime dir: the compositor socket and whatever the session's helpers (portals, gvfs)
+    # create stay out of the user's, and cannot collide with another harness running at the same time.
+    mkdir -m 700 "$tmp/runtime"
     # GSETTINGS_BACKEND covers the whole private session, so services it starts (portals) never
     # read or write the user's settings either.
-    if GSETTINGS_BACKEND=memory timeout --kill-after=5 120 dbus-run-session -- bash -c '
+    if XDG_RUNTIME_DIR="$tmp/runtime" GSETTINGS_BACKEND=memory timeout --kill-after=5 120 dbus-run-session -- bash -c '
         weston --backend=headless --renderer=pixman --socket="$1" --idle-time=0 >"$2/weston.log" 2>&1 &
         weston_pid=$!
         trap "kill $weston_pid 2>/dev/null" EXIT

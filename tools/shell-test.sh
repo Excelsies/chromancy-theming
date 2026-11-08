@@ -45,6 +45,11 @@ for script in "${scripts[@]}"; do
         run_home="$sandbox/home"
         mkdir -p "$run_home/Desktop"  # Ubuntu's desktop-icons extension expects it
     fi
+    # GNOME Shell keeps session files in the runtime dir (the Wayland socket, the
+    # gnome-shell-disable-extensions crash marker). A headless shell started by any other harness at the
+    # same time would share the user's and remove files this shell still needs, so each gets its own.
+    export XDG_RUNTIME_DIR="$sandbox/runtime"
+    mkdir -m 700 -p "$XDG_RUNTIME_DIR"
     mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_DATA_HOME/applications"
     ln -s "$root/extension" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     printf '[Desktop Entry]\nType=Application\nName=Chromancy Test Window\nExec=gjs -m %s\nDBusActivatable=false\n' \

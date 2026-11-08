@@ -1,5 +1,6 @@
 // The extension loads the shell stylesheet Chromancy writes, follows rewrites and removal, keeps the
 // last good one when a new one does not parse, and gives back a stylesheet another extension had set.
+// The shell runs with the sandbox's own runtime dir.
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
@@ -16,6 +17,8 @@ export async function run() {
     const t = new Suite();
     const ext = extension().stateObj;
     t.check('the extension is enabled', ext?.shellTheme !== undefined);
+    t.equal('the shell uses the sandbox\'s own runtime dir, not the user\'s',
+        GLib.get_user_runtime_dir(), `${GLib.getenv('CHROMANCY_SANDBOX')}/runtime`);
     t.equal('with no stylesheet written, the session theme is used', stylesheet(), null);
     const yaruPanel = panelBg();
 

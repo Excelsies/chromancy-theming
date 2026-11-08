@@ -56,3 +56,9 @@ variables it sets as `!default`, writes the build's entry files, replaces the sh
 with the palette's, and changes `optimize-contrast()` in `sass-utils.scss` to try the other direction
 instead of stopping when a contrast target is out of reach. The stylesheets it builds are derived from
 Yaru and covered by Yaru's licenses.
+
+## qt6ct
+
+`tests/fixtures/qt6ct/simple.conf` is one of the color schemes bundled with qt6ct 0.11
+(https://www.opencode.net/trialuser/qt6ct), used to check that Chromancy writes qt6ct's format. qt6ct is
+licensed under the BSD 2-Clause License.

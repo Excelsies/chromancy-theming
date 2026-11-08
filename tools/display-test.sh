@@ -31,6 +31,8 @@ for script in "${scripts[@]}"; do
         cat "$tmp/stderr.log" >&2 || true
         grep -vE 'dbus-daemon|portal|SpiRegistry|fusermount|keyring|^$' "$tmp/session.log" >&2 || true
     fi
-    rm -rf "$tmp"
+    # Helpers of the private session (portals, gvfs) can still be writing into it for a moment.
+    for _ in 1 2 3 4 5; do rm -rf "$tmp" 2>/dev/null && break; sleep 1; done
+    [[ -e "$tmp" ]] && echo "warning: could not remove $tmp" >&2
 done
 exit $status

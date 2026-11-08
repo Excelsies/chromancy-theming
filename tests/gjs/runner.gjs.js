@@ -4,7 +4,6 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import { applyPalette, defaultContext, loadPalettes, restoreTargets } from '../../app/runner.js';
-import { TARGETS } from '../../lib/targets/index.js';
 import { LINE_MARKER } from '../../lib/applier.js';
 
 if (GLib.getenv('GSETTINGS_BACKEND') !== 'memory') {
@@ -20,7 +19,8 @@ const tmp = GLib.dir_make_tmp('chromancy-runner-XXXXXX');
 const ctx = { ...defaultContext({ config: `${tmp}/config`, data: `${tmp}/data`, state: `${tmp}/state` }), gtkTheme: 'Yaru-purple-dark' };
 const read = p => (GLib.file_test(p, GLib.FileTest.EXISTS) ? new TextDecoder().decode(GLib.file_get_contents(p)[1]) : null);
 const iface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-const all = TARGETS.map(t => t.id);
+// The desktop targets; the app and integration targets have their own test (targets.gjs.js).
+const all = ['style', 'gtk4', 'gtk3', 'shell', 'fonts'];
 
 const lines = [];
 let failures = 0;

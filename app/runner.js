@@ -1,7 +1,8 @@
 // Applies a palette to the enabled targets and restores them: loads palettes, checks each target's
-// lock, runs the Yaru builds, plans every target and hands the operations to the applier. A target
-// that is locked, fails to build or fails to plan is reported and left exactly as it was (its earlier
-// changes are not pruned), while the others go ahead.
+// app and lock, runs the Yaru builds, plans every target and hands the operations to the applier. A
+// target whose app is missing, or that is locked, fails to build or fails to plan, is reported and left
+// exactly as it was (its earlier changes are not pruned), while the others go ahead. A target with
+// nothing to apply for this palette (no terminal colors) is restored to how it was before Chromancy.
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -11,6 +12,7 @@ import { resolvePalette } from '../lib/derive.js';
 import { parseConfig, serializeConfig } from '../lib/config.js';
 import { parsePalette, PaletteError } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
+import { TargetSkipped } from '../lib/targets/common.js';
 import { buildGtk3, buildShell } from './yaruBuild.js';
 import { system } from './system.js';
 
@@ -34,6 +36,9 @@ export function defaultContext(overrides = {}) {
         builtinPalettes: `${appDir}/data/palettes`,
         userPalettes: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/palettes`,
         configPath: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/config.json`,
+        userTemplates: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/templates`,
+        templatesDir: `${appDir}/data/templates`,
+        home: overrides.home ?? GLib.get_home_dir(),
         vendorDir: `${appDir}/vendor/yaru`,
     };
 }
@@ -101,10 +106,24 @@ export async function applyPalette(palette, targetIds, ctx) {
     try {
         for (const target of TARGETS.filter(t => targetIds.includes(t.id))) {
             const fail = (status, error) => results.push({ target: target.id, subject: 'target', status, error });
+            const targetCtx = { ...ctx, system };
+            let info = {};
+            if (target.inspect) {
+                try {
+                    info = await target.inspect(targetCtx);
+                } catch (e) {
+                    fail('failed', `could not check for it: ${e.message}`);
+                    continue;
+                }
+                if (!info.available) {
+                    fail('skipped', info.reason);
+                    continue;
+                }
+            }
             if (target.lock !== 'none') {
                 let locked;
                 try {
-                    locked = await target.lock(ctx);
+                    locked = await target.lock(targetCtx, info);
                 } catch (e) {
                     fail('locked', `its lock could not be read: ${e.message}`);
                     continue;
@@ -121,10 +140,16 @@ export async function applyPalette(palette, targetIds, ctx) {
                     GLib.mkdir_with_parents(dir, 0o700);
                     built = await BUILDERS[target.build](palette, { vendorDir: ctx.vendorDir, workDir: dir });
                 }
-                ops.push(...target.plan(palette, planCtx, built));
+                ops.push(...target.plan(palette, { ...planCtx, info }, built));
                 planned.push(target.id);
             } catch (e) {
-                fail('failed', e.message);
+                if (e instanceof TargetSkipped) {
+                    // Nothing to apply for this palette: what the target applied before is restored.
+                    fail('skipped', e.message);
+                    planned.push(target.id);
+                } else {
+                    fail('failed', e.message);
+                }
             }
         }
         const applied = await apply(ops, { system, ledgerPath: ctx.ledgerPath, targets: planned });

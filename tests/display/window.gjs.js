@@ -58,6 +58,9 @@ async function main(app) {
     check(cards === 22, `22 palette cards (${cards})`);
     check(await waitFor(() => win._banner.get_revealed(), 4000), 'with no shell extension running, the banner says so');
 
+    // The checks below are about the desktop targets; the others have their own test (targets.gjs.js).
+    for (const id of ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates'])
+        await win.setTarget(id, false);
     win.select('jeweltone-dark');
     await sleep(300);
     check(win._selName.get_label() === 'Jeweltone Dark', 'selecting a palette shows it');

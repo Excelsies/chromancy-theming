@@ -68,6 +68,26 @@ export function schemaKeys(schema, schemaDir) {
 
 export const system = {
     schemaKeys: async (schema, schemaDir) => schemaKeys(schema, schemaDir),
+    hasProgram: async name => GLib.find_program_in_path(name) !== null,
+
+    /** The *.tmpl files in a directory, as {name, text}; none when it does not exist. */
+    async listTemplates(dir) {
+        let enumerator;
+        try {
+            enumerator = Gio.File.new_for_path(dir).enumerate_children('standard::name', 0, null);
+        } catch (e) {
+            if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+                return [];
+            throw e;
+        }
+        const out = [];
+        for (let info; (info = enumerator.next_file(null));) {
+            const name = info.get_name();
+            if (name.endsWith('.tmpl'))
+                out.push({ name, text: await this.readText(`${dir}/${name}`) });
+        }
+        return out.sort((a, b) => a.name.localeCompare(b.name));
+    },
 
     /** @returns {Promise<string | null>} the file's text, or null when it does not exist */
     async readText(path) {

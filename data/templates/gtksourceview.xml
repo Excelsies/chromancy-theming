@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- {{name}}, written by Chromancy Theming from the palette's terminal colors. -->
+<style-scheme id="chromancy-theming" name="Chromancy ({{name}})" version="1.0">
+  <author>Chromancy Theming</author>
+  <description>Generated from the palette {{name}}</description>
+  <metadata>
+    <property name="variant">{{variant}}</property>
+  </metadata>
+
+  <style name="text" foreground="{{term-foreground}}" background="{{term-background}}"/>
+  <style name="selection" foreground="{{on-primary}}" background="{{primary}}"/>
+  <style name="selection-unfocused" foreground="{{on-surface}}" background="{{hover}}"/>
+  <style name="cursor" foreground="{{term-cursor}}"/>
+  <style name="secondary-cursor" foreground="{{on-surface-variant}}"/>
+  <style name="current-line" background="{{surface-container}}"/>
+  <style name="line-numbers" foreground="{{on-surface-variant}}" background="{{term-background}}"/>
+  <style name="current-line-number" foreground="{{primary}}" background="{{surface-container}}"/>
+  <style name="right-margin" foreground="{{outline-variant}}" background="{{surface-container}}"/>
+  <style name="draw-spaces" foreground="{{outline-variant}}"/>
+  <style name="background-pattern" background="{{surface-container}}"/>
+  <style name="bracket-match" foreground="{{on-primary}}" background="{{primary}}" bold="true"/>
+  <style name="bracket-mismatch" foreground="{{ansi15}}" background="{{ansi1}}" bold="true"/>
+  <style name="search-match" foreground="{{on-primary}}" background="{{primary}}"/>
+
+  <style name="def:comment" foreground="{{ansi8}}" italic="true"/>
+  <style name="def:shebang" foreground="{{ansi8}}" bold="true"/>
+  <style name="def:doc-comment-element" foreground="{{ansi8}}" bold="true"/>
+  <style name="def:constant" foreground="{{ansi3}}"/>
+  <style name="def:number" foreground="{{ansi11}}"/>
+  <style name="def:boolean" foreground="{{ansi11}}"/>
+  <style name="def:special-char" foreground="{{ansi13}}"/>
+  <style name="def:string" foreground="{{ansi2}}"/>
+  <style name="def:identifier" foreground="{{ansi12}}"/>
+  <style name="def:function" foreground="{{ansi6}}"/>
+  <style name="def:statement" foreground="{{ansi5}}" bold="true"/>
+  <style name="def:keyword" foreground="{{ansi5}}" bold="true"/>
+  <style name="def:type" foreground="{{ansi4}}" bold="true"/>
+  <style name="def:preprocessor" foreground="{{ansi14}}"/>
+  <style name="def:emphasis" italic="true"/>
+  <style name="def:strong-emphasis" bold="true"/>
+  <style name="def:inline-code" foreground="{{ansi2}}"/>
+  <style name="def:link-text" foreground="{{primary}}" underline="single"/>
+  <style name="def:heading" foreground="{{primary}}" bold="true"/>
+  <style name="def:error" foreground="{{ansi9}}" underline="error"/>
+  <style name="def:warning" foreground="{{ansi11}}" underline="error"/>
+  <style name="def:note" foreground="{{ansi12}}" bold="true"/>
+  <style name="def:net-address" foreground="{{primary}}" underline="single"/>
+  <style name="diff:added-line" foreground="{{ansi10}}"/>
+  <style name="diff:removed-line" foreground="{{ansi9}}"/>
+  <style name="diff:changed-line" foreground="{{ansi11}}"/>
+  <style name="diff:location" foreground="{{ansi12}}" bold="true"/>
+</style-scheme>

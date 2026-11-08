@@ -1,0 +1,17 @@
+<!-- The keys of Conjure Launcher's schema that Chromancy uses (a fixture written for the tests). -->
+<schemalist>
+  <schema id="org.gnome.shell.extensions.conjure-launcher" path="/org/gnome/shell/extensions/conjure-launcher/">
+    <key name="theme-primary" type="s"><default>''</default></key>
+    <key name="theme-on-primary" type="s"><default>''</default></key>
+    <key name="theme-surface" type="s"><default>''</default></key>
+    <key name="theme-surface-container" type="s"><default>''</default></key>
+    <key name="theme-on-surface" type="s"><default>''</default></key>
+    <key name="theme-on-surface-variant" type="s"><default>''</default></key>
+    <key name="theme-outline-variant" type="s"><default>''</default></key>
+    <key name="theme-hover" type="s"><default>''</default></key>
+    <key name="theme-on-hover" type="s"><default>''</default></key>
+    <key name="theme-font-family" type="s"><default>''</default></key>
+    <key name="theme-overrides-locked" type="b"><default>false</default></key>
+    <key name="theme-override-source" type="s"><default>''</default></key>
+  </schema>
+</schemalist>

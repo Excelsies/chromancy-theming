@@ -21,6 +21,14 @@ const TARGET_DESCRIPTIONS = {
     gtk3: 'Older GTK apps, through Yaru rebuilt with the palette',
     shell: 'Top bar, menus, quick settings and notifications (needs the Chromancy Theming extension)',
     fonts: 'Interface, document and monospace fonts',
+    flatpak: 'Lets Flatpak apps read the GTK stylesheets (from their next start)',
+    qt: 'Qt apps, through qt6ct (from the next login)',
+    conjure: 'Conjure Launcher\u2019s colors, unless it is set to keep its own',
+    plaid: 'Active, unfocused and scratchpad window borders',
+    ptyxis: 'A Chromancy palette in Ptyxis\u2019s default profile (needs terminal colors)',
+    btop: 'A Chromancy theme for btop (needs terminal colors)',
+    'text-editor': 'A style scheme for Text Editor\u2019s writing area (needs terminal colors)',
+    templates: 'Your templates in ~/.config/chromancy-theming/templates',
 };
 const FONT_TITLES = { interface: 'Interface', document: 'Documents', monospace: 'Monospace' };
 const SHELL_PATH = '/io/github/excelsies/ChromancyTheming/Shell';

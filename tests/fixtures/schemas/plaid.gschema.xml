@@ -1,0 +1,10 @@
+<!-- The keys of Plaid's schema that Chromancy uses (a fixture written for the tests). -->
+<schemalist>
+  <schema id="org.gnome.shell.extensions.plaid" path="/org/gnome/shell/extensions/plaid/">
+    <key name="active-border-color" type="as"><default>['#3584e4']</default></key>
+    <key name="active-border-color-2" type="as"><default>['#3584e4']</default></key>
+    <key name="inactive-border-color" type="as"><default>['#555555']</default></key>
+    <key name="inactive-border-color-2" type="as"><default>['#555555']</default></key>
+    <key name="scratchpad-border-color" type="as"><default>['#f5c211']</default></key>
+  </schema>
+</schemalist>

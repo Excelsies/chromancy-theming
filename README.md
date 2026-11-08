@@ -31,6 +31,36 @@ Targets:
 | `gtk3` | GTK 3 apps: Yaru rebuilt with the palette, in `~/.config/gtk-3.0/`, imported from `gtk.css` |
 | `shell` | GNOME Shell: Yaru's shell theme rebuilt with the palette; the `chromancy-theming@excelsies` extension loads it |
 | `fonts` | The interface, document and monospace fonts, when the palette sets them |
+| `flatpak` | Lets Flatpak apps read the GTK stylesheets (a read-only grant in `~/.local/share/flatpak/overrides/global`) |
+| `qt` | Qt apps through qt6ct: a color scheme, selected in `qt6ct.conf`, and `QT_QPA_PLATFORMTHEME=qt6ct` from the next login |
+| `conjure` | Conjure Launcher's colors, through its theming keys, unless it is set to keep its own |
+| `plaid` | Plaid's active, unfocused and scratchpad window borders |
+| `ptyxis` | A Chromancy palette, selected in Ptyxis's default profile |
+| `btop` | A Chromancy theme for btop, selected in `btop.conf` |
+| `text-editor` | A style scheme for Text Editor's writing area, from the terminal colors |
+| `templates` | Your own templates (below) |
+
+Targets whose app is not installed are skipped. Ptyxis, btop and Text Editor need the palette's terminal
+colors; with a palette that has none they go back to how they were before Chromancy.
+
+### Your own templates
+
+Files in `~/.config/chromancy-theming/templates/*.tmpl` are filled with the palette and written where their
+first line says, inside your home directory:
+
+```
+chromancy-output: ~/.config/kitty/chromancy.conf
+background {{term-background}}
+foreground {{term-foreground}}
+color1 {{ansi1}}
+```
+
+Every color has a name: `{{primary}}`, `{{on-primary}}`, `{{surface}}`, `{{surface-container}}`,
+`{{on-surface}}`, `{{on-surface-variant}}`, `{{outline-variant}}`, `{{hover}}`, `{{on-hover}}`,
+`{{secondary}}`, `{{tertiary}}`, `{{inactive-border}}`, `{{error}}`, `{{success}}`, `{{warning}}`; with
+terminal colors, `{{term-background}}`, `{{term-foreground}}`, `{{term-cursor}}`, `{{term-cursor-text}}` and
+`{{ansi0}}` to `{{ansi15}}`. Add `.hex` for the value without `#` (`{{primary.hex}}`). `{{name}}` and
+`{{variant}}` are the palette's name and `dark` or `light`. An unknown name stops that target with an error.
 
 Chromancy adds one marked line to each `gtk.css` and leaves the rest of the file as you wrote it.
 Restore puts every file and setting back as it was before Chromancy first changed it, and removes only

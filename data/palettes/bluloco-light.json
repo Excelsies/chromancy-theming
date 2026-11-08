@@ -1,0 +1,38 @@
+{
+  "name": "Bluloco Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#275fe4",
+    "on-primary": "#f9f9f9",
+    "surface": "#f9f9f9",
+    "surface-container": "#ebecec",
+    "on-surface": "#383a42",
+    "on-surface-variant": "#8f9094",
+    "outline-variant": "#dadadc",
+    "hover": "#e2e2e3",
+    "on-hover": "#383a42"
+  },
+  "terminal": {
+    "background": "#f9f9f9",
+    "foreground": "#383a42",
+    "ansi": [
+      "#d5d6dd",
+      "#d52753",
+      "#23974a",
+      "#df631c",
+      "#275fe4",
+      "#823ff1",
+      "#27618d",
+      "#000000",
+      "#e4e5ed",
+      "#ff6480",
+      "#3cbc66",
+      "#c5a332",
+      "#0099e1",
+      "#ce33c0",
+      "#6d93bb",
+      "#26272d"
+    ],
+    "cursor": "#383a42"
+  }
+}

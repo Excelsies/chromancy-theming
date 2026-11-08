@@ -1,0 +1,38 @@
+{
+  "name": "Nord Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#6c888e",
+    "on-primary": "#000000",
+    "surface": "#e5e9f0",
+    "surface-container": "#dadee5",
+    "on-surface": "#414858",
+    "on-surface-variant": "#4c556a",
+    "outline-variant": "#cbcfd8",
+    "hover": "#d1d6de",
+    "on-hover": "#414858"
+  },
+  "terminal": {
+    "background": "#e5e9f0",
+    "foreground": "#414858",
+    "ansi": [
+      "#3b4251",
+      "#bf6069",
+      "#a3be8b",
+      "#eacb8a",
+      "#81a1c1",
+      "#b48dac",
+      "#88c0d0",
+      "#d8dee9",
+      "#4c556a",
+      "#bf6069",
+      "#a3be8b",
+      "#eacb8a",
+      "#81a1c1",
+      "#b48dac",
+      "#8fbcbb",
+      "#eceff4"
+    ],
+    "cursor": "#414858"
+  }
+}

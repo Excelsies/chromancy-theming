@@ -1,0 +1,38 @@
+{
+  "name": "PaperColor Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#0087af",
+    "on-primary": "#000000",
+    "surface": "#eeeeee",
+    "surface-container": "#e2e2e2",
+    "on-surface": "#444444",
+    "on-surface-variant": "#888888",
+    "outline-variant": "#d3d3d3",
+    "hover": "#dadada",
+    "on-hover": "#444444"
+  },
+  "terminal": {
+    "background": "#eeeeee",
+    "foreground": "#444444",
+    "ansi": [
+      "#eeeeee",
+      "#af0000",
+      "#008700",
+      "#5f8700",
+      "#0087af",
+      "#878787",
+      "#005f87",
+      "#444444",
+      "#bcbcbc",
+      "#d70000",
+      "#d70087",
+      "#8700af",
+      "#d75f00",
+      "#d75f00",
+      "#005faf",
+      "#005f87"
+    ],
+    "cursor": "#444444"
+  }
+}

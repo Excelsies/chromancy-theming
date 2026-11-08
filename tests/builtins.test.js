@@ -8,12 +8,26 @@ const DIR = new URL('../data/palettes/', import.meta.url);
 const files = readdirSync(DIR).filter(f => f.endsWith('.json')).sort();
 const load = f => resolvePalette(parsePalette(f.slice(0, -5), JSON.parse(readFileSync(new URL(f, DIR), 'utf8'))));
 
-test('the built-in set is Jeweltone Dark and Light plus Conjure Launcher\'s other themes', () => {
-    assert.deepEqual(files.map(f => f.slice(0, -5)), [
-        'aura', 'ayu', 'catppuccin', 'dracula', 'eldritch', 'gotham', 'gruvbox', 'jellybeans', 'jeweltone-dark',
-        'jeweltone-light', 'kanagawa', 'molokai', 'moonfly', 'night-owl', 'noctalia', 'nord', 'oceanic-next',
-        'one-half-black', 'oxocarbon-dark', 'rose-pine', 'tokyo-night', 'tomorrow-night',
-    ]);
+test('the built-in set: Jeweltone Dark and Light, Conjure Launcher\'s dark themes, and light themes', () => {
+    assert.deepEqual(files.map(f => f.slice(0, -5)).sort(), [
+        'aura', 'ayu', 'ayu-light', 'bluloco-light', 'catppuccin', 'catppuccin-latte', 'dracula', 'eldritch', 'everforest-light',
+        'github-light', 'gotham', 'gruvbox', 'gruvbox-light', 'jellybeans', 'jeweltone-dark', 'jeweltone-light', 'kanagawa',
+        'molokai', 'moonfly', 'night-owl', 'noctalia', 'nord', 'nord-light', 'oceanic-next', 'one-half-black', 'one-light',
+        'oxocarbon-dark', 'papercolor-light', 'rose-pine', 'rose-pine-dawn', 'selenized-light', 'solarized-light',
+        'tokyo-night', 'tokyo-night-day', 'tomorrow', 'tomorrow-night',
+        'everforest-dark', 'one-dark', 'solarized-dark', 'github-dark',
+        'horizon-light', 'vscode-light', 'pencil-light', 'google-light', 'breath-light', 'lunaria-light', 'hemisu-light',
+        'belafonte-day', 'novel', 'ura',
+    ].sort());
+});
+
+test('25 built-ins are light and 25 dark, and each light one has an accent that stands out (3:1) on its background', async () => {
+    const { contrast } = await import('../lib/color.js');
+    const light = files.map(load).filter(p => p.variant === 'light');
+    assert.equal(light.length, 25);
+    assert.equal(files.length - light.length, 25);
+    for (const p of light)
+        assert.ok(contrast(p.colors.primary, p.colors.surface) >= 3, `${p.name}: accent ${p.colors.primary} on ${p.colors.surface}`);
 });
 
 test('every built-in parses, meets the contrast floor and has a unique name', () => {

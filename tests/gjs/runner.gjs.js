@@ -36,7 +36,7 @@ GLib.mkdir_with_parents(ctx.userPalettes, 0o700);
 GLib.file_set_contents(`${ctx.userPalettes}/broken.json`, '{"name": "Broken", "colors": {}}');
 
 const { palettes, errors } = loadPalettes(ctx);
-check(palettes.size === 22, `22 built-in palettes load (got ${palettes.size})`);
+check(palettes.size === 50, `50 built-in palettes load (got ${palettes.size})`);
 check(errors.length === 1 && /colors\.primary/.test(errors[0].error), `a broken user palette is reported with its key (${JSON.stringify(errors)})`);
 
 const dark = palettes.get('jeweltone-dark');

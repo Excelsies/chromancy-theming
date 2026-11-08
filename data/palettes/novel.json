@@ -1,0 +1,38 @@
+{
+  "name": "Novel",
+  "variant": "light",
+  "colors": {
+    "primary": "#0000cc",
+    "on-primary": "#dfdbc3",
+    "surface": "#dfdbc3",
+    "surface-container": "#d4ceb8",
+    "on-surface": "#3b2322",
+    "on-surface-variant": "#85766a",
+    "outline-variant": "#c5bea9",
+    "hover": "#cbc5b0",
+    "on-hover": "#3b2322"
+  },
+  "terminal": {
+    "background": "#dfdbc3",
+    "foreground": "#3b2322",
+    "ansi": [
+      "#000000",
+      "#cc0000",
+      "#009600",
+      "#d06b00",
+      "#0000cc",
+      "#cc00cc",
+      "#0087cc",
+      "#cccccc",
+      "#808080",
+      "#cc0000",
+      "#009600",
+      "#d06b00",
+      "#0000cc",
+      "#cc00cc",
+      "#0087cc",
+      "#ffffff"
+    ],
+    "cursor": "#3b2322"
+  }
+}

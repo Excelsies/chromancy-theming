@@ -211,3 +211,8 @@ export async function applyBlacklist(config, ctx) {
     const appTargets = Object.values(APP_TARGETS).filter(t => enabled.includes(t) && config.applied);
     return applyPalette(palette, ['blacklist', ...appTargets], { ...ctx, blacklist: config.blacklist });
 }
+
+/** Deletes one of the user's palettes (~/.config/chromancy-theming/palettes/<id>.json). */
+export function deletePalette(ctx, id) {
+    return system.remove(`${ctx.userPalettes}/${id}.json`);
+}

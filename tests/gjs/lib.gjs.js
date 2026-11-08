@@ -29,7 +29,7 @@ for (let info; (info = enumerator.next_file(null));) {
     const p = resolvePalette(parsePalette(name.slice(0, -5), JSON.parse(read(GLib.build_filenamev([dataDir, name])))));
     check(p.warnings.length === 0, `${name}: ${p.warnings.join('; ')}`);
 }
-check(count === 22, `expected 22 built-in palettes, found ${count}`);
+check(count === 50, `expected 50 built-in palettes, found ${count}`);
 
 check(contrast('#767676', '#ffffff').toFixed(2) === '4.54', 'contrast under GJS');
 check(mix('#ff0000', '#0000ff', 0.25) === '#bf0040', 'mix under GJS');

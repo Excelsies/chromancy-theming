@@ -1,0 +1,38 @@
+{
+  "name": "Hemisu Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#538091",
+    "on-primary": "#000000",
+    "surface": "#efefef",
+    "surface-container": "#e3e3e3",
+    "on-surface": "#444444",
+    "on-surface-variant": "#888888",
+    "outline-variant": "#d4d4d4",
+    "hover": "#dadada",
+    "on-hover": "#444444"
+  },
+  "terminal": {
+    "background": "#efefef",
+    "foreground": "#444444",
+    "ansi": [
+      "#777777",
+      "#ff0055",
+      "#739100",
+      "#503d15",
+      "#538091",
+      "#5b345e",
+      "#538091",
+      "#999999",
+      "#999999",
+      "#d65e76",
+      "#9cc700",
+      "#947555",
+      "#9db3cd",
+      "#a184a4",
+      "#85b2aa",
+      "#bababa"
+    ],
+    "cursor": "#ff0054"
+  }
+}

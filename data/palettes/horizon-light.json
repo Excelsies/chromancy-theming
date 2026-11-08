@@ -1,0 +1,38 @@
+{
+  "name": "Horizon Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#2494ac",
+    "on-primary": "#1c1e26",
+    "surface": "#fdf0ed",
+    "surface-container": "#ede1df",
+    "on-surface": "#1c1e26",
+    "on-surface-variant": "#1a1c23",
+    "outline-variant": "#d9cecd",
+    "hover": "#e2d7d5",
+    "on-hover": "#1c1e26"
+  },
+  "terminal": {
+    "background": "#fdf0ed",
+    "foreground": "#1c1e26",
+    "ansi": [
+      "#16161c",
+      "#da103f",
+      "#1eb980",
+      "#f6661e",
+      "#26bbd9",
+      "#ee64ae",
+      "#1d8991",
+      "#fadad1",
+      "#1a1c23",
+      "#f43e5c",
+      "#07da8c",
+      "#f77d26",
+      "#3fc6de",
+      "#f075b7",
+      "#1eaeae",
+      "#fdf0ed"
+    ],
+    "cursor": "#1c1e26"
+  }
+}

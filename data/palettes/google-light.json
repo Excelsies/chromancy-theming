@@ -1,0 +1,38 @@
+{
+  "name": "Google Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#4285f4",
+    "on-primary": "#000000",
+    "surface": "#ffffff",
+    "surface-container": "#f4f4f4",
+    "on-surface": "#5f6368",
+    "on-surface-variant": "#5f6368",
+    "outline-variant": "#e5e6e7",
+    "hover": "#ececed",
+    "on-hover": "#5f6368"
+  },
+  "terminal": {
+    "background": "#ffffff",
+    "foreground": "#5f6368",
+    "ansi": [
+      "#202124",
+      "#ea4335",
+      "#34a853",
+      "#fbbc04",
+      "#4285f4",
+      "#a142f4",
+      "#24c1e0",
+      "#e8eaed",
+      "#5f6368",
+      "#ea4335",
+      "#34a853",
+      "#fbbc05",
+      "#4285f4",
+      "#a142f4",
+      "#24c1e0",
+      "#ffffff"
+    ],
+    "cursor": "#5f6368"
+  }
+}

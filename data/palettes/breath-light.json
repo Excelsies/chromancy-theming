@@ -1,0 +1,38 @@
+{
+  "name": "Breath Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#1f89d6",
+    "on-primary": "#000000",
+    "surface": "#e8e8e8",
+    "surface-container": "#dbdbdb",
+    "on-surface": "#292f34",
+    "on-surface-variant": "#7f8285",
+    "outline-variant": "#c9cacb",
+    "hover": "#d1d2d2",
+    "on-hover": "#292f34"
+  },
+  "terminal": {
+    "background": "#e8e8e8",
+    "foreground": "#292f34",
+    "ansi": [
+      "#e8e8e8",
+      "#ed1515",
+      "#c0392b",
+      "#f67400",
+      "#1d99f3",
+      "#9b59b6",
+      "#1abc9c",
+      "#fcfcfc",
+      "#7f8c8d",
+      "#c0392b",
+      "#55a649",
+      "#fdbc4b",
+      "#3daee9",
+      "#8e44ad",
+      "#16a085",
+      "#ffffff"
+    ],
+    "cursor": "#292f34"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Selenized Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#0072d4",
+    "on-primary": "#ffffff",
+    "surface": "#fbf3db",
+    "surface-container": "#efe9d3",
+    "on-surface": "#53676d",
+    "on-surface-variant": "#7d8a88",
+    "outline-variant": "#e0ddc9",
+    "hover": "#e7e2ce",
+    "on-hover": "#53676d"
+  },
+  "terminal": {
+    "background": "#fbf3db",
+    "foreground": "#53676d",
+    "ansi": [
+      "#fbf3db",
+      "#d2212d",
+      "#489100",
+      "#ad8900",
+      "#0072d4",
+      "#ca4898",
+      "#009c8f",
+      "#53676d",
+      "#ece3cc",
+      "#cc1729",
+      "#428b00",
+      "#a78300",
+      "#006dce",
+      "#c44392",
+      "#00978a",
+      "#3a4d53"
+    ],
+    "cursor": "#53676d"
+  }
+}

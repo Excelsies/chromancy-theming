@@ -1,0 +1,38 @@
+{
+  "name": "VS Code Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#0752a8",
+    "on-primary": "#f9f9f9",
+    "surface": "#f9f9f9",
+    "surface-container": "#e8e8e8",
+    "on-surface": "#020202",
+    "on-surface-variant": "#5e5e5e",
+    "outline-variant": "#d1d1d1",
+    "hover": "#dbdbdb",
+    "on-hover": "#020202"
+  },
+  "terminal": {
+    "background": "#f9f9f9",
+    "foreground": "#020202",
+    "ansi": [
+      "#020202",
+      "#cd3232",
+      "#00bc00",
+      "#a5a900",
+      "#0752a8",
+      "#bc05bc",
+      "#0598bc",
+      "#343434",
+      "#5e5e5e",
+      "#cd3333",
+      "#1bce1a",
+      "#adbb5b",
+      "#0752a8",
+      "#c451ce",
+      "#52a8c7",
+      "#a6a3a6"
+    ],
+    "cursor": "#020202"
+  }
+}

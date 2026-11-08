@@ -1,0 +1,38 @@
+{
+  "name": "Ayu Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#789a1f",
+    "on-primary": "#000000",
+    "surface": "#fafafa",
+    "surface-container": "#efeff0",
+    "on-surface": "#575f66",
+    "on-surface-variant": "#8a9199",
+    "outline-variant": "#e0e1e2",
+    "hover": "#e6e7e8",
+    "on-hover": "#575f66"
+  },
+  "terminal": {
+    "background": "#fafafa",
+    "foreground": "#575f66",
+    "ansi": [
+      "#575f66",
+      "#f51818",
+      "#86b300",
+      "#f2ae49",
+      "#399ee6",
+      "#a37acc",
+      "#4cbf99",
+      "#fafafa",
+      "#8a9199",
+      "#f51818",
+      "#86b300",
+      "#f2ae49",
+      "#399ee6",
+      "#a37acc",
+      "#4cbf99",
+      "#fafafa"
+    ],
+    "cursor": "#ff9940"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Ura",
+  "variant": "light",
+  "colors": {
+    "primary": "#1b6fc2",
+    "on-primary": "#feffee",
+    "surface": "#feffee",
+    "surface-container": "#eff2e5",
+    "on-surface": "#23476a",
+    "on-surface-variant": "#808080",
+    "outline-variant": "#dbe2d9",
+    "hover": "#e4e9de",
+    "on-hover": "#23476a"
+  },
+  "terminal": {
+    "background": "#feffee",
+    "foreground": "#23476a",
+    "ansi": [
+      "#000000",
+      "#c21b6f",
+      "#6fc21b",
+      "#c26f1b",
+      "#1b6fc2",
+      "#6f1bc2",
+      "#1bc26f",
+      "#808080",
+      "#808080",
+      "#ee84b9",
+      "#b9ee84",
+      "#eeb984",
+      "#84b9ee",
+      "#b984ee",
+      "#84eeb9",
+      "#e5e5e5"
+    ],
+    "cursor": "#23476a"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Belafonte Day",
+  "variant": "light",
+  "colors": {
+    "primary": "#426a79",
+    "on-primary": "#ffffff",
+    "surface": "#d5ccba",
+    "surface-container": "#cbc2b1",
+    "on-surface": "#45373c",
+    "on-surface-variant": "#5e5252",
+    "outline-variant": "#beb4a6",
+    "hover": "#c4baab",
+    "on-hover": "#45373c"
+  },
+  "terminal": {
+    "background": "#d5ccba",
+    "foreground": "#45373c",
+    "ansi": [
+      "#20111b",
+      "#be100e",
+      "#858162",
+      "#eaa549",
+      "#426a79",
+      "#97522c",
+      "#989a9c",
+      "#968c83",
+      "#5e5252",
+      "#be100e",
+      "#858162",
+      "#eaa549",
+      "#426a79",
+      "#97522c",
+      "#989a9c",
+      "#d5ccba"
+    ],
+    "cursor": "#45373c"
+  }
+}

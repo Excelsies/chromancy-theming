@@ -27,8 +27,11 @@ export function allCardsCss(palettes) {
     return [...palettes.values()].map(cardCss).join('\n');
 }
 
-/** A palette card: a swatch drawn in the palette's colors, its name and kind. */
-export function paletteCard(palette, { applied = false } = {}) {
+/**
+ * A palette card: a swatch drawn in the palette's colors, its name and kind. With onDelete (the user's
+ * own palettes), a small delete button sits on the swatch.
+ */
+export function paletteCard(palette, { applied = false, onDelete = null } = {}) {
     const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 6, css_classes: [`cp-card-${palette.id}`] });
     box.paletteId = palette.id;
     const swatch = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 8, css_classes: ['cp-swatch'],
@@ -41,9 +44,18 @@ export function paletteCard(palette, { applied = false } = {}) {
     swatch.append(bar);
     swatch.append(dots);
     box.append(swatch);
+    if (onDelete) {
+        box.remove(swatch);
+        const overlay = new Gtk.Overlay({ child: swatch });
+        const del = new Gtk.Button({ icon_name: 'user-trash-symbolic', tooltip_text: `Delete \u201c${palette.name}\u201d`,
+            halign: Gtk.Align.END, valign: Gtk.Align.START, margin_top: 6, margin_end: 6, css_classes: ['circular', 'osd'] });
+        del.connect('clicked', () => onDelete(palette.id));
+        overlay.add_overlay(del);
+        box.append(overlay);
+        box.deleteButton = del;
+    }
     const title = new Gtk.Label({ label: palette.name, xalign: 0, css_classes: ['heading'], ellipsize: 3 });
-    const kind = [palette.variant === 'dark' ? 'Dark' : 'Light', palette.origin === 'user' ? 'yours' : null,
-        applied ? 'applied' : null].filter(Boolean).join(' · ');
+    const kind = applied ? 'Applied' : palette.origin === 'user' ? 'Yours' : 'Built in';
     box.append(title);
     box.append(new Gtk.Label({ label: kind, xalign: 0, css_classes: ['caption', 'dim-label'] }));
     return box;

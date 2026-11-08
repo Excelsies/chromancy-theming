@@ -1,0 +1,38 @@
+{
+  "name": "Tomorrow",
+  "variant": "light",
+  "colors": {
+    "primary": "#4171ae",
+    "on-primary": "#ffffff",
+    "surface": "#ffffff",
+    "surface-container": "#f3f3f2",
+    "on-surface": "#4d4d4c",
+    "on-surface-variant": "#000000",
+    "outline-variant": "#e3e3e2",
+    "hover": "#eaeaea",
+    "on-hover": "#4d4d4c"
+  },
+  "terminal": {
+    "background": "#ffffff",
+    "foreground": "#4d4d4c",
+    "ansi": [
+      "#000000",
+      "#c82828",
+      "#718c00",
+      "#eab700",
+      "#4171ae",
+      "#8959a8",
+      "#3e999f",
+      "#fffefe",
+      "#000000",
+      "#c82828",
+      "#708b00",
+      "#e9b600",
+      "#4170ae",
+      "#8958a7",
+      "#3d999f",
+      "#fffefe"
+    ],
+    "cursor": "#4c4c4c"
+  }
+}

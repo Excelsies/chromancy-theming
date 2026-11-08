@@ -23,7 +23,7 @@ async function cli(...args) {
 }
 
 let r = await cli('list');
-check(r.status === 0 && r.out.length === 22 && r.out.some(l => l.startsWith('jeweltone-dark')), `list shows the 22 palettes (${r.status}, ${r.out.length})`);
+check(r.status === 0 && r.out.length === 50 && r.out.some(l => l.startsWith('jeweltone-dark')), `list shows the 50 palettes (${r.status}, ${r.out.length})`);
 r = await cli('apply', 'nope');
 check(r.status === 2 && /no palette "nope"/.test(r.err[0]), 'an unknown palette is a usage error');
 r = await cli('apply', 'nord', '--targets=gtk4,bogus');

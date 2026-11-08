@@ -133,7 +133,7 @@ for (const id of ids) {
         broken.push(`${id}: ${e.message.split('\n')[0]}`);
     }
 }
-check(ids.length === 22 && broken.length === 0, `all ${ids.length} built-in palettes build${broken.length ? `: ${broken.join('; ')}` : ''}`);
+check(ids.length === 50 && broken.length === 0, `all ${ids.length} built-in palettes build${broken.length ? `: ${broken.join('; ')}` : ''}`);
 
 let message = '';
 try {

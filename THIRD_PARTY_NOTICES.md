@@ -39,7 +39,11 @@ SOFTWARE.
 
 The terminal colors of every built-in palette except Jeweltone, Eldritch and Noctalia, and the UI colors of
 the Aura, Gotham, Jellybeans, Molokai, Moonfly, Night Owl, Oceanic Next, One Half Black, Oxocarbon and
-Tomorrow Night palettes, come from terminal palettes in the Gogh collection
+Tomorrow Night palettes, of Everforest Dark, GitHub Dark, One Dark and Solarized Dark, and of every light
+palette except Jeweltone Light (Ayu Light, Belafonte Day, Bluloco Light, Breath Light, Catppuccin Latte,
+Everforest Light, GitHub Light, Google Light, Gruvbox Light, Hemisu Light, Horizon Light, Lunaria Light,
+Nord Light, Novel, One Light, PaperColor Light, Pencil Light, Rosé Pine Dawn, Selenized Light, Solarized
+Light, Tokyo Night Day, Tomorrow, Ura, VS Code Light), come from terminal palettes in the Gogh collection
 (https://github.com/Gogh-Co/Gogh), as bundled with Ptyxis 50.1. Gogh is dual-licensed under the MIT
 License and the Apache License 2.0; these are used under the MIT License.
 

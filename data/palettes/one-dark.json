@@ -1,0 +1,38 @@
+{
+  "name": "One Dark",
+  "variant": "dark",
+  "colors": {
+    "primary": "#61afef",
+    "on-primary": "#1e2127",
+    "surface": "#1e2127",
+    "surface-container": "#26292f",
+    "on-surface": "#8d929b",
+    "on-surface-variant": "#6c7078",
+    "outline-variant": "#30333a",
+    "hover": "#2b2f35",
+    "on-hover": "#ffffff"
+  },
+  "terminal": {
+    "background": "#1e2127",
+    "foreground": "#5c6370",
+    "ansi": [
+      "#000000",
+      "#e06c75",
+      "#98c379",
+      "#d19a66",
+      "#61afef",
+      "#c678dd",
+      "#56b6c2",
+      "#abb2bf",
+      "#5c6370",
+      "#e06c75",
+      "#98c379",
+      "#d19a66",
+      "#61afef",
+      "#c678dd",
+      "#56b6c2",
+      "#fffefe"
+    ],
+    "cursor": "#5c6370"
+  }
+}

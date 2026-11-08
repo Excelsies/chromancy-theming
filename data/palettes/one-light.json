@@ -1,0 +1,38 @@
+{
+  "name": "One Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#315eee",
+    "on-primary": "#f8f8f8",
+    "surface": "#f8f8f8",
+    "surface-container": "#eaeaea",
+    "on-surface": "#2a2b32",
+    "on-surface-variant": "#2a2b32",
+    "outline-variant": "#d7d7d8",
+    "hover": "#dfdfe0",
+    "on-hover": "#2a2b32"
+  },
+  "terminal": {
+    "background": "#f8f8f8",
+    "foreground": "#2a2b32",
+    "ansi": [
+      "#000000",
+      "#da3e39",
+      "#41933e",
+      "#855504",
+      "#315eee",
+      "#930092",
+      "#0e6fad",
+      "#8e8f96",
+      "#2a2b32",
+      "#da3e39",
+      "#41933e",
+      "#855504",
+      "#315eee",
+      "#930092",
+      "#0e6fad",
+      "#fffefe"
+    ],
+    "cursor": "#2a2b32"
+  }
+}

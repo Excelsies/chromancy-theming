@@ -52,10 +52,24 @@ async function main(app) {
     win.present();
     await win.ready;
     await sleep(400);
-    let cards = 0;
-    for (let c = win._flow.get_first_child(); c; c = c.get_next_sibling())
-        cards++;
-    check(cards === 22, `22 palette cards (${cards})`);
+    const count = flow => {
+        let n = 0;
+        for (let c = flow.get_first_child(); c; c = c.get_next_sibling())
+            n++;
+        return n;
+    };
+    const cards = win._flowBoxes.reduce((n, f) => n + count(f), 0);
+    check(cards === 50, `50 palette cards (${cards})`);
+    check(count(win._sections.dark.builtIn) === 25 && count(win._sections.light.builtIn) === 25,
+        'dark palettes in the Dark tab, light ones in the Light tab');
+    check(!win._sections.dark.mineBox.get_visible() && !win._sections.light.mineBox.get_visible(), 'no "Yours" section without palettes of your own');
+    win.select('catppuccin-latte');
+    await sleep(300);
+    check(win._variantStack.get_visible_child_name() === 'light', 'selecting a light palette shows the Light tab');
+    shot(win, 'palettes-light');
+    const groupedRows = win._targetRows.length;
+    check(groupedRows === 13 && win._targetRows.some(r => r.ids.join() === 'conjure,plaid' && r.row.get_title() === 'Shell extensions'),
+        `Apply To shows the shell extensions as one switch (${groupedRows} switches)`);
     check(await waitFor(() => win._banner.get_revealed(), 4000), 'with no shell extension running, the banner says so');
 
     // The checks below are about the desktop targets; the others have their own test (targets.gjs.js).
@@ -108,6 +122,17 @@ async function main(app) {
     const saved = JSON.parse(read(`${ctx.userPalettes}/golden-hour.json`) ?? '{}');
     check(saved.colors?.primary === '#d08a3c' && saved.terminal?.ansi?.length === 16, 'with its colors and the terminal colors it started from');
     check(win.selected?.id === 'golden-hour', 'and selects it');
+    check(win._sections.dark.mineBox.get_visible() && count(win._sections.dark.mine) === 1, 'it is under "Yours" in the Dark tab');
+    const yourCard = win._cardOf('golden-hour').child.get_child();
+    check(yourCard.get_first_child() instanceof Gtk.Overlay && yourCard.get_first_child().get_child()?.get_height() >= 80,
+        'your card shows its swatch, with the delete button over it');
+    check(win._deleteButton.get_visible(), 'a palette of your own can be deleted from the preview pane');
+    await sleep(300);
+    shot(win, 'palettes-yours');
+    check(await win.deletePalette('golden-hour'), 'deleting it succeeds');
+    check(read(`${ctx.userPalettes}/golden-hour.json`) === null && !win.palettes.has('golden-hour'), 'its file and card are gone');
+    check(!win._sections.dark.mineBox.get_visible(), 'and the "Yours" section with it');
+    check(!win._deleteButton.get_visible(), 'built-in palettes cannot be deleted');
 
     const calc = `${ctx.paths.data}/applications/org.gnome.Calculator.desktop`;
     results = await win.addToBlacklist('org.gnome.Calculator.desktop');

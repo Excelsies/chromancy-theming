@@ -1,0 +1,38 @@
+{
+  "name": "Tokyo Night Day",
+  "variant": "light",
+  "colors": {
+    "primary": "#2e7de9",
+    "on-primary": "#000000",
+    "surface": "#e1e2e7",
+    "surface-container": "#d5d8e3",
+    "on-surface": "#3256ac",
+    "on-surface-variant": "#6680be",
+    "outline-variant": "#c5ccde",
+    "hover": "#ccd1e0",
+    "on-hover": "#000000"
+  },
+  "terminal": {
+    "background": "#e1e2e7",
+    "foreground": "#3760bf",
+    "ansi": [
+      "#e9e9ed",
+      "#f52a65",
+      "#587539",
+      "#8c6c3e",
+      "#2e7de9",
+      "#9854f1",
+      "#007197",
+      "#6172b0",
+      "#a1a6c5",
+      "#f52a65",
+      "#587539",
+      "#8c6c3e",
+      "#2e7de9",
+      "#9854f1",
+      "#007197",
+      "#3760bf"
+    ],
+    "cursor": "#3760bf"
+  }
+}

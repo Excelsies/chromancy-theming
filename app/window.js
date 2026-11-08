@@ -12,7 +12,7 @@ import { withFonts } from '../lib/config.js';
 import { FONT_ROLES } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
 import { PaletteEditor } from './editor.js';
-import { applyBlacklist, applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig, savePalette } from './runner.js';
+import { applyBlacklist, applyPalette, deletePalette, loadConfig, loadPalettes, restoreTargets, saveConfig, savePalette } from './runner.js';
 import { ScopedCss, allCardsCss, paletteCard, previewCss, previewWidget } from './widgets.js';
 
 const TARGET_DESCRIPTIONS = {
@@ -23,8 +23,6 @@ const TARGET_DESCRIPTIONS = {
     fonts: 'Interface, document and monospace fonts',
     flatpak: 'Lets Flatpak apps read the GTK stylesheets (from their next start)',
     qt: 'Qt apps, through qt6ct (from the next login)',
-    conjure: 'Conjure Launcher\u2019s colors, unless it is set to keep its own',
-    plaid: 'Active, unfocused and scratchpad window borders',
     ptyxis: 'A Chromancy palette in Ptyxis\u2019s default profile (needs terminal colors)',
     btop: 'A Chromancy theme for btop (needs terminal colors)',
     'text-editor': 'A style scheme for Text Editor\u2019s writing area (needs terminal colors)',
@@ -32,6 +30,14 @@ const TARGET_DESCRIPTIONS = {
     blacklist: 'Keeps the apps on the Blacklist page out of the theme',
 };
 const SHELL_INTERFACE = 'io.github.excelsies.ChromancyTheming.Shell';
+/** Targets shown as one switch. */
+const TARGET_GROUPS = [
+    { ids: ['conjure', 'plaid'], title: 'Shell extensions',
+        subtitle: 'Extensions that take their colors from Chromancy, such as launchers and window borders' },
+];
+const groupOf = id => TARGET_GROUPS.find(g => g.ids.includes(id));
+/** The title a target is shown under. */
+const targetTitle = id => groupOf(id)?.title ?? TARGETS.find(t => t.id === id)?.title ?? id;
 const FONT_TITLES = { interface: 'Interface', document: 'Documents', monospace: 'Monospace' };
 const SHELL_PATH = '/io/github/excelsies/ChromancyTheming/Shell';
 
@@ -79,17 +85,27 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
 
     _palettesPage() {
         const paned = new Gtk.Box();
-        const scroller = new Gtk.ScrolledWindow({ hscrollbar_policy: Gtk.PolicyType.NEVER, hexpand: true, width_request: 420 });
-        this._flow = new Gtk.FlowBox({ selection_mode: Gtk.SelectionMode.SINGLE, homogeneous: true, min_children_per_line: 2,
-            max_children_per_line: 5, column_spacing: 12, row_spacing: 18, valign: Gtk.Align.START,
-            margin_start: 18, margin_end: 18, margin_top: 18, margin_bottom: 18 });
-        this._flow.connect('selected-children-changed', () => {
-            const child = this._flow.get_selected_children()[0];
-            if (child)
-                this.select(child.get_child().paletteId);
-        });
-        scroller.set_child(this._flow);
-        paned.append(scroller);
+        const left = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, hexpand: true, width_request: 420 });
+        this._variantStack = new Adw.ViewStack({ vexpand: true });
+        left.append(new Adw.InlineViewSwitcher({ stack: this._variantStack, halign: Gtk.Align.CENTER, margin_top: 12 }));
+        left.append(this._variantStack);
+        this._sections = {};
+        for (const [variant, title] of [['dark', 'Dark'], ['light', 'Light']]) {
+            const box = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 8, valign: Gtk.Align.START,
+                margin_start: 18, margin_end: 18, margin_top: 12, margin_bottom: 18 });
+            const mineBox = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 8 });
+            const mine = this._flowBox();
+            mineBox.append(new Gtk.Label({ label: 'Yours', xalign: 0, css_classes: ['heading'] }));
+            mineBox.append(mine);
+            mineBox.append(new Gtk.Separator({ margin_top: 10, margin_bottom: 6 }));
+            const builtIn = this._flowBox();
+            box.append(mineBox);
+            box.append(new Gtk.Label({ label: 'Built In', xalign: 0, css_classes: ['heading'] }));
+            box.append(builtIn);
+            this._variantStack.add_titled(new Gtk.ScrolledWindow({ hscrollbar_policy: Gtk.PolicyType.NEVER, child: box }), variant, title);
+            this._sections[variant] = { mine, builtIn, mineBox };
+        }
+        paned.append(left);
 
         const side = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing: 12, width_request: 520,
             margin_start: 6, margin_end: 18, margin_top: 18, margin_bottom: 18 });
@@ -101,38 +117,110 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._preview.set_vexpand(true);
         side.append(this._preview);
         const actions = new Gtk.Box({ spacing: 8, halign: Gtk.Align.END });
-        const customize = new Gtk.Button({ label: 'Customize…' });
+        this._deleteButton = new Gtk.Button({ label: 'Delete', css_classes: ['destructive-action'], visible: false });
+        this._deleteButton.connect('clicked', () => this.confirmDeletePalette(this.selected.id));
+        const customize = new Gtk.Button({ label: 'Customize\u2026' });
         customize.connect('clicked', () => this.openEditor());
+        actions.append(this._deleteButton);
         actions.append(customize);
         side.append(actions);
         paned.append(side);
         return paned;
     }
 
-    _fillPalettes() {
-        let child;
-        while ((child = this._flow.get_first_child()))
-            this._flow.remove(child);
-        this._cardsCss.set(allCardsCss(this.palettes));
-        for (const p of this.palettes.values())
-            this._flow.append(paletteCard(p, { applied: p.id === this.config.applied }));
+    _flowBox() {
+        const flow = new Gtk.FlowBox({ selection_mode: Gtk.SelectionMode.SINGLE, homogeneous: true, min_children_per_line: 2,
+            max_children_per_line: 5, column_spacing: 12, row_spacing: 18, valign: Gtk.Align.START });
+        flow.connect('selected-children-changed', () => {
+            const child = flow.get_selected_children()[0];
+            if (child && !this._selecting)
+                this.select(child.get_child().paletteId);
+        });
+        return flow;
     }
 
-    /** Selects a palette: card, preview and the saved choice. */
+    get _flowBoxes() {
+        return Object.values(this._sections).flatMap(s => [s.mine, s.builtIn]);
+    }
+
+    _fillPalettes() {
+        for (const flow of this._flowBoxes) {
+            let child;
+            while ((child = flow.get_first_child()))
+                flow.remove(child);
+        }
+        this._cardsCss.set(allCardsCss(this.palettes));
+        for (const p of this.palettes.values()) {
+            const section = this._sections[p.variant];
+            const mine = p.origin === 'user';
+            (mine ? section.mine : section.builtIn).append(paletteCard(p, { applied: p.id === this.config.applied,
+                onDelete: mine ? id => this.confirmDeletePalette(id) : null }));
+        }
+        for (const s of Object.values(this._sections))
+            s.mineBox.set_visible(s.mine.get_first_child() !== null);
+    }
+
+    /** The card's FlowBox child for a palette, and its FlowBox. */
+    _cardOf(id) {
+        for (const flow of this._flowBoxes) {
+            for (let child = flow.get_first_child(); child; child = child.get_next_sibling()) {
+                if (child.get_child()?.paletteId === id)
+                    return { flow, child };
+            }
+        }
+        return null;
+    }
+
+    /** Selects a palette: its tab, its card, the preview and the saved choice. */
     select(id) {
         const palette = this.palettes.get(id);
         if (!palette)
             return;
         this.selected = palette;
         this._showPreview(palette);
-        const index = [...this.palettes.keys()].indexOf(id);
-        const child = this._flow.get_child_at_index(index);
-        if (child && !child.is_selected())
-            this._flow.select_child(child);
+        this._deleteButton.set_visible(palette.origin === 'user');
+        this._selecting = true;
+        this._variantStack.set_visible_child_name(palette.variant);
+        const card = this._cardOf(id);
+        for (const flow of this._flowBoxes) {
+            if (flow !== card?.flow)
+                flow.unselect_all();
+        }
+        if (card && !card.child.is_selected())
+            card.flow.select_child(card.child);
+        this._selecting = false;
         if (this.config.palette !== id) {
             this.config = { ...this.config, palette: id };
             this._saveConfig();
         }
+    }
+
+    /** Asks, then deletes one of the user's palettes. Resolves to true when it was deleted. */
+    async confirmDeletePalette(id) {
+        const palette = this.palettes.get(id);
+        if (palette?.origin !== 'user')
+            return false;
+        if (!await this._confirm(`Delete \u201c${palette.name}\u201d?`,
+            'Its file is removed. Apps keep their current colors until you apply another palette.', 'Delete'))
+            return false;
+        return this.deletePalette(id);
+    }
+
+    /** Deletes one of the user's palettes without asking. Resolves to true when it was deleted. */
+    async deletePalette(id) {
+        const palette = this.palettes.get(id);
+        try {
+            await deletePalette(this.ctx, id);
+        } catch (e) {
+            this.toast(`Could not delete the palette: ${e.message}`);
+            return false;
+        }
+        this._reloadPalettes();
+        const next = this.palettes.get(id) ?? this.palettes.get(this.config.applied)
+            ?? [...this.palettes.values()].find(p => p.variant === palette.variant);
+        this.select(next.id);
+        this.toast(`Deleted \u201c${palette.name}\u201d`);
+        return true;
     }
 
     _showPreview(palette) {
@@ -236,16 +324,21 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
     _targetsPage() {
         const page = new Adw.PreferencesPage();
         const group = new Adw.PreferencesGroup({ title: 'Apply To', description: 'Turned-off targets are left as they are.' });
-        this._targetRows = new Map();
+        this._targetRows = [];
+        const shown = new Set();
         for (const t of TARGETS) {
-            const row = new Adw.SwitchRow({ title: t.title, subtitle: TARGET_DESCRIPTIONS[t.id] ?? '' });
+            if (shown.has(t.id))
+                continue;
+            const g = groupOf(t.id);
+            const ids = g ? g.ids : [t.id];
+            ids.forEach(id => shown.add(id));
+            const row = new Adw.SwitchRow({ title: g ? g.title : t.title, subtitle: g ? g.subtitle : TARGET_DESCRIPTIONS[t.id] ?? '' });
             row.connect('notify::active', () => {
-                if (this._settingTargets)
-                    return;
-                this.setTarget(t.id, row.get_active());
+                if (!this._settingTargets)
+                    this.setTargets(ids, row.get_active());
             });
             group.add(row);
-            this._targetRows.set(t.id, row);
+            this._targetRows.push({ ids, row });
         }
         page.add(group);
         return page;
@@ -257,11 +350,18 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
 
     /** Turns a target on or off. Resolves once the choice is saved. */
     setTarget(id, on) {
+        return this.setTargets([id], on);
+    }
+
+    /** Turns targets on or off together. Resolves once the choice is saved. */
+    setTargets(ids, on) {
         const set = new Set(this.enabledTargets);
-        if (on)
-            set.add(id);
-        else
-            set.delete(id);
+        for (const id of ids) {
+            if (on)
+                set.add(id);
+            else
+                set.delete(id);
+        }
         this.config = { ...this.config, targets: TARGETS.map(t => t.id).filter(t => set.has(t)) };
         this._showTargets();
         return this._saveConfig();
@@ -269,8 +369,8 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
 
     _showTargets() {
         this._settingTargets = true;
-        for (const [id, row] of this._targetRows)
-            row.set_active(this.enabledTargets.includes(id));
+        for (const { ids, row } of this._targetRows)
+            row.set_active(ids.some(id => this.enabledTargets.includes(id)));
         this._settingTargets = false;
         this._applyButton.set_sensitive(!this.busy && this.enabledTargets.length > 0);
     }
@@ -442,12 +542,20 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._fillPalettes();
     }
 
-    async _saveConfig() {
-        try {
-            await saveConfig(this.ctx, this.config);
-        } catch (e) {
-            this.toast(`Could not save the settings: ${e.message}`);
-        }
+    /**
+     * Saves the settings. Saves run one after another, each writing the settings as they are when its
+     * turn comes: two writes started together could otherwise finish in either order, and an older one
+     * finishing last would undo a newer change.
+     */
+    _saveConfig() {
+        this._saving = (this._saving ?? Promise.resolve()).then(async () => {
+            try {
+                await saveConfig(this.ctx, this.config);
+            } catch (e) {
+                this.toast(`Could not save the settings: ${e.message}`);
+            }
+        });
+        return this._saving;
     }
 
     _checkExtension() {
@@ -552,17 +660,17 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         const page = new Adw.PreferencesPage();
         const groups = new Map();
         for (const r of results) {
-            if (!groups.has(r.target)) {
-                const t = TARGETS.find(x => x.id === r.target);
-                const g = new Adw.PreferencesGroup({ title: t?.title ?? r.target });
-                groups.set(r.target, g);
+            const title = targetTitle(r.target);
+            if (!groups.has(title)) {
+                const g = new Adw.PreferencesGroup({ title });
+                groups.set(title, g);
                 page.add(g);
             }
             const subject = r.subject === 'target' ? '' : r.subject.replace(/^file:/, '').replace(/^setting:/, '');
             const row = new Adw.ActionRow({ title: GLib.markup_escape_text(r.error ?? subject ?? '', -1),
                 subtitle: r.error ? GLib.markup_escape_text(subject, -1) : (r.overwrote ? 'overwrote a later change' : '') });
             row.add_suffix(new Gtk.Label({ label: r.status, css_classes: r.status === 'failed' || r.status === 'locked' ? ['error'] : ['dim-label'] }));
-            groups.get(r.target).add(row);
+            groups.get(title).add(row);
         }
         view.set_content(page);
         dialog.set_child(view);

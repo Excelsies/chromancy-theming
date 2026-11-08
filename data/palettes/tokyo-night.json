@@ -1,0 +1,38 @@
+{
+  "name": "Tokyo Night",
+  "variant": "dark",
+  "colors": {
+    "primary": "#7aa2f7",
+    "on-primary": "#16161e",
+    "surface": "#1a1b26",
+    "surface-container": "#24283b",
+    "on-surface": "#c0caf5",
+    "on-surface-variant": "#9aa5ce",
+    "outline-variant": "#353d57",
+    "hover": "#9ece6a",
+    "on-hover": "#16161e"
+  },
+  "terminal": {
+    "background": "#1a1b26",
+    "foreground": "#c0caf5",
+    "ansi": [
+      "#414868",
+      "#f7768e",
+      "#9ece6a",
+      "#e0af68",
+      "#7aa2f7",
+      "#bb9af7",
+      "#7dcfff",
+      "#a9b1d6",
+      "#414868",
+      "#f7768e",
+      "#9ece6a",
+      "#e0af68",
+      "#7aa2f7",
+      "#bb9af7",
+      "#7dcfff",
+      "#c0caf5"
+    ],
+    "cursor": "#c0caf5"
+  }
+}

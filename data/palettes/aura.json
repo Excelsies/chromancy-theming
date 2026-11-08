@@ -1,0 +1,38 @@
+{
+  "name": "Aura",
+  "variant": "dark",
+  "colors": {
+    "primary": "#a277ff",
+    "on-primary": "#15141b",
+    "surface": "#15141b",
+    "surface-container": "#24232a",
+    "on-surface": "#edecee",
+    "on-surface-variant": "#6d6d6d",
+    "outline-variant": "#38373d",
+    "hover": "#61ffca",
+    "on-hover": "#15141b"
+  },
+  "terminal": {
+    "background": "#15141b",
+    "foreground": "#edecee",
+    "ansi": [
+      "#110f18",
+      "#ff6767",
+      "#61ffca",
+      "#ffca85",
+      "#a277ff",
+      "#a277ff",
+      "#61ffca",
+      "#edecee",
+      "#6d6d6d",
+      "#ffca85",
+      "#a277ff",
+      "#ffca85",
+      "#a277ff",
+      "#a277ff",
+      "#61ffca",
+      "#edecee"
+    ],
+    "cursor": "#edecee"
+  }
+}

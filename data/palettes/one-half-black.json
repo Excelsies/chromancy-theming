@@ -1,0 +1,38 @@
+{
+  "name": "One Half Black",
+  "variant": "dark",
+  "colors": {
+    "primary": "#61afef",
+    "on-primary": "#000000",
+    "surface": "#000000",
+    "surface-container": "#0f1010",
+    "on-surface": "#dcdfe4",
+    "on-surface-variant": "#797b7d",
+    "outline-variant": "#232424",
+    "hover": "#56b6c2",
+    "on-hover": "#000000"
+  },
+  "terminal": {
+    "background": "#000000",
+    "foreground": "#dcdfe4",
+    "ansi": [
+      "#282c34",
+      "#e06c75",
+      "#98c379",
+      "#e5c07b",
+      "#61afef",
+      "#c678dd",
+      "#56b6c2",
+      "#dcdfe4",
+      "#282c34",
+      "#e06c75",
+      "#98c379",
+      "#e5c07b",
+      "#61afef",
+      "#c678dd",
+      "#56b6c2",
+      "#dcdfe4"
+    ],
+    "cursor": "#dcdfe4"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "Night Owl",
+  "variant": "dark",
+  "colors": {
+    "primary": "#82aaff",
+    "on-primary": "#011627",
+    "surface": "#011627",
+    "surface-container": "#102435",
+    "on-surface": "#d6deeb",
+    "on-surface-variant": "#768493",
+    "outline-variant": "#233646",
+    "hover": "#21c7a8",
+    "on-hover": "#011627"
+  },
+  "terminal": {
+    "background": "#011627",
+    "foreground": "#d6deeb",
+    "ansi": [
+      "#011627",
+      "#ef5350",
+      "#22da6e",
+      "#addb67",
+      "#82aaff",
+      "#c792ea",
+      "#21c7a8",
+      "#ffffff",
+      "#575656",
+      "#ef5350",
+      "#22da6e",
+      "#ffeb95",
+      "#82aaff",
+      "#c792ea",
+      "#7fdbca",
+      "#ffffff"
+    ],
+    "cursor": "#d6deeb"
+  }
+}

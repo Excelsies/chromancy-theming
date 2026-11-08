@@ -1,0 +1,38 @@
+{
+  "name": "Oceanic Next",
+  "variant": "dark",
+  "colors": {
+    "primary": "#5486c0",
+    "on-primary": "#121b21",
+    "surface": "#121b21",
+    "surface-container": "#1d262c",
+    "on-surface": "#b3b8c3",
+    "on-surface-variant": "#6b717a",
+    "outline-variant": "#2c343b",
+    "hover": "#50a5a4",
+    "on-hover": "#121b21"
+  },
+  "terminal": {
+    "background": "#121b21",
+    "foreground": "#b3b8c3",
+    "ansi": [
+      "#121c21",
+      "#e44754",
+      "#89bd82",
+      "#f7bd51",
+      "#5486c0",
+      "#b77eb8",
+      "#50a5a4",
+      "#ffffff",
+      "#52606b",
+      "#e44754",
+      "#89bd82",
+      "#f7bd51",
+      "#5486c0",
+      "#b77eb8",
+      "#50a5a4",
+      "#ffffff"
+    ],
+    "cursor": "#b3b8c3"
+  }
+}

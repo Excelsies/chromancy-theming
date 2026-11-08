@@ -1,0 +1,30 @@
+{
+  "name": "Jeweltone Light",
+  "variant": "light",
+  "colors": {
+    "primary": "#7a5510",
+    "on-primary": "#ffffff",
+    "secondary": "#5f4185",
+    "on-secondary": "#ffffff",
+    "tertiary": "#0f7a4f",
+    "on-tertiary": "#ffffff",
+    "error": "#a8322b",
+    "surface": "#f5efe6",
+    "on-surface": "#1f1a24",
+    "surface-container": "#e6dccd",
+    "on-surface-variant": "#544a5e",
+    "outline-variant": "#8c8095",
+    "hover": "#e0d5c6",
+    "on-hover": "#1f1a24"
+  },
+  "terminal": {
+    "background": "#f5efe6",
+    "foreground": "#1f1a24",
+    "cursor": "#7a5510",
+    "cursor-text": "#ffffff",
+    "ansi": [
+      "#1f1a24", "#a8322b", "#0f7a4f", "#7a5510", "#3f4b8c", "#5f4185", "#0e7a66", "#544a5e",
+      "#8c8095", "#c24a40", "#169a64", "#9a6e1c", "#5563a8", "#7a57a3", "#149b80", "#0f0c14"
+    ]
+  }
+}

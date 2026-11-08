@@ -1,0 +1,15 @@
+{
+  "name": "Noctalia",
+  "variant": "dark",
+  "colors": {
+    "primary": "#fff59b",
+    "on-primary": "#0e0e43",
+    "surface": "#070722",
+    "surface-container": "#11112d",
+    "on-surface": "#f3edf7",
+    "on-surface-variant": "#7c80b4",
+    "outline-variant": "#21215f",
+    "hover": "#9bfece",
+    "on-hover": "#0e0e43"
+  }
+}

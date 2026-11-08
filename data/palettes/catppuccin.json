@@ -1,0 +1,38 @@
+{
+  "name": "Catppuccin",
+  "variant": "dark",
+  "colors": {
+    "primary": "#cba6f7",
+    "on-primary": "#11111b",
+    "surface": "#1e1e2e",
+    "surface-container": "#313244",
+    "on-surface": "#cdd6f4",
+    "on-surface-variant": "#a3b4eb",
+    "outline-variant": "#4c4f69",
+    "hover": "#94e2d5",
+    "on-hover": "#11111b"
+  },
+  "terminal": {
+    "background": "#1e1e2e",
+    "foreground": "#cdd6f4",
+    "ansi": [
+      "#45475a",
+      "#f38ba8",
+      "#a6e3a1",
+      "#f9e2af",
+      "#89b4fa",
+      "#f5c2e7",
+      "#94e2d5",
+      "#bac2de",
+      "#585b70",
+      "#f38ba8",
+      "#a6e3a1",
+      "#f9e2af",
+      "#89b4fa",
+      "#f5c2e7",
+      "#94e2d5",
+      "#a6adc8"
+    ],
+    "cursor": "#cdd6f4"
+  }
+}

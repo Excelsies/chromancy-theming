@@ -1,0 +1,30 @@
+{
+  "name": "Jeweltone Dark",
+  "variant": "dark",
+  "colors": {
+    "primary": "#e3c078",
+    "on-primary": "#17120a",
+    "secondary": "#b392d4",
+    "on-secondary": "#17101f",
+    "tertiary": "#43e597",
+    "on-tertiary": "#04140c",
+    "error": "#e8736b",
+    "surface": "#0b0910",
+    "on-surface": "#ede4d9",
+    "surface-container": "#191420",
+    "on-surface-variant": "#a99b8c",
+    "outline-variant": "#6b5c77",
+    "hover": "#241c2e",
+    "on-hover": "#f3eae0"
+  },
+  "terminal": {
+    "background": "#0b0910",
+    "foreground": "#ede4d9",
+    "cursor": "#e3c078",
+    "cursor-text": "#17120a",
+    "ansi": [
+      "#191420", "#c8635c", "#2fc67d", "#d9b368", "#8c7fc0", "#a87fc8", "#31c4a2", "#a99b8c",
+      "#6b5c77", "#e8736b", "#61efab", "#e3c078", "#a99be0", "#c9a8e8", "#6eedcf", "#ede4d9"
+    ]
+  }
+}

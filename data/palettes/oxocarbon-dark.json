@@ -1,0 +1,38 @@
+{
+  "name": "Oxocarbon",
+  "variant": "dark",
+  "colors": {
+    "primary": "#33b1ff",
+    "on-primary": "#161616",
+    "surface": "#161616",
+    "surface-container": "#262626",
+    "on-surface": "#ffffff",
+    "on-surface-variant": "#969696",
+    "outline-variant": "#3b3b3b",
+    "hover": "#3ddbd9",
+    "on-hover": "#161616"
+  },
+  "terminal": {
+    "background": "#161616",
+    "foreground": "#ffffff",
+    "ansi": [
+      "#262626",
+      "#ee5396",
+      "#42be65",
+      "#ffe97b",
+      "#33b1ff",
+      "#ff7eb6",
+      "#3ddbd9",
+      "#dde1e6",
+      "#393939",
+      "#ee5396",
+      "#42be65",
+      "#ffe97b",
+      "#33b1ff",
+      "#ff7eb6",
+      "#3ddbd9",
+      "#ffffff"
+    ],
+    "cursor": "#6f6f6f"
+  }
+}

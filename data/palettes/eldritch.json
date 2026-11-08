@@ -1,0 +1,15 @@
+{
+  "name": "Eldritch",
+  "variant": "dark",
+  "colors": {
+    "primary": "#37f499",
+    "on-primary": "#171928",
+    "surface": "#212337",
+    "surface-container": "#292e42",
+    "on-surface": "#ebfafa",
+    "on-surface-variant": "#abb4da",
+    "outline-variant": "#3b4261",
+    "hover": "#a48cf2",
+    "on-hover": "#171928"
+  }
+}

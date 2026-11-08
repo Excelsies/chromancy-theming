@@ -1,0 +1,38 @@
+{
+  "name": "Tomorrow Night",
+  "variant": "dark",
+  "colors": {
+    "primary": "#81a2be",
+    "on-primary": "#1d1f21",
+    "surface": "#1d1f21",
+    "surface-container": "#292b2d",
+    "on-surface": "#c5c8c6",
+    "on-surface-variant": "#797c7c",
+    "outline-variant": "#383a3b",
+    "hover": "#8abeb7",
+    "on-hover": "#1d1f21"
+  },
+  "terminal": {
+    "background": "#1d1f21",
+    "foreground": "#c5c8c6",
+    "ansi": [
+      "#000000",
+      "#cc6666",
+      "#b5bd68",
+      "#f0c674",
+      "#81a2be",
+      "#b293bb",
+      "#8abeb7",
+      "#fffefe",
+      "#000000",
+      "#cc6666",
+      "#b5bd68",
+      "#f0c574",
+      "#80a1bd",
+      "#b294ba",
+      "#8abdb6",
+      "#fffefe"
+    ],
+    "cursor": "#c4c8c5"
+  }
+}

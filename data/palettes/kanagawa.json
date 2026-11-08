@@ -1,0 +1,38 @@
+{
+  "name": "Kanagawa",
+  "variant": "dark",
+  "colors": {
+    "primary": "#76946a",
+    "on-primary": "#1f1f28",
+    "surface": "#1f1f28",
+    "surface-container": "#2a2a37",
+    "on-surface": "#c8c093",
+    "on-surface-variant": "#717c7c",
+    "outline-variant": "#363646",
+    "hover": "#7e9cd8",
+    "on-hover": "#1f1f28"
+  },
+  "terminal": {
+    "background": "#1f1f28",
+    "foreground": "#dcd7ba",
+    "ansi": [
+      "#090618",
+      "#c34043",
+      "#76946a",
+      "#c0a36e",
+      "#7e9cd8",
+      "#957fb8",
+      "#6a9589",
+      "#dcd7ba",
+      "#727169",
+      "#e82424",
+      "#98bb6c",
+      "#e6c384",
+      "#7fb4ca",
+      "#938aa9",
+      "#7aa89f",
+      "#c8c093"
+    ],
+    "cursor": "#dcd7ba"
+  }
+}

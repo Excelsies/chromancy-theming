@@ -8,7 +8,11 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 [[ $# -ge 2 ]] || { echo "usage: $0 <out-dir> <palette>..." >&2; exit 2; }
 out=$(realpath -m "$1"); shift
 mkdir -p "$out"
-export CHROMANCY_SHOT_DIR="$out" CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_SANDBOX_HOME=1
+export CHROMANCY_SHOT_DIR="$out"
+# The previews show the shell as this user has it: the extensions they turned off (Ubuntu Dock, desktop
+# icons...) stay off in the sandbox too. Read from the real settings; nothing is written there.
+CHROMANCY_DISABLED_EXTENSIONS="$(gsettings get org.gnome.shell disabled-extensions 2>/dev/null || true)"
+export CHROMANCY_DISABLED_EXTENSIONS CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_SANDBOX_HOME=1
 status=0
 for name in stock "$@"; do
     if [[ $name == stock ]]; then palette=""; else palette=$name; fi

@@ -5,7 +5,7 @@ import { parsePalette } from '../lib/palette.js';
 import { resolvePalette } from '../lib/derive.js';
 import {
     markDefaults, gtk3Variables, shellVariables, gtk3Entry, shellEntry, preprocessShellScss, replaceShellAccent,
-    overrideBlock, parseSource, patchSassUtils, YaruBuildError,
+    overrideBlock, parseSource, patchSassUtils, patchGtk3ButtonText, YaruBuildError,
 } from '../lib/yaru.js';
 
 const vendor = p => readFileSync(new URL(`../vendor/yaru/${p}`, import.meta.url), 'utf8');
@@ -33,7 +33,10 @@ test('the GTK 3 variables come from the palette, semantic ones only when given',
     assert.deepEqual(v, {
         bg_color: '#0b0910', fg_color: '#ede4d9', base_color: '#191420', text_color: '#ede4d9',
         headerbar_color: '#191420', menu_color: '#191420', error_color: '#e8736b',
+        // Yaru draws dark-variant backdrop text from white; the same formula on the palette text.
+        backdrop_fg_color: 'transparentize(#ede4d9, 0.35)', backdrop_text_color: 'transparentize(#ede4d9, 0.45)',
     });
+    assert.equal(gtk3Variables(builtin('jeweltone-light')).backdrop_fg_color, undefined, 'the light variant already uses fg');
     assert.equal(gtk3Variables(builtin('nord')).error_color, undefined);
 });
 
@@ -120,4 +123,13 @@ test('the vendored optimize-contrast() is patched to try the other direction ins
     assert.doesNotMatch(patched, /@error "Cannot reach contrast target/);
     assert.match(patched, /\$dark-bg: not \$dark-bg;/);
     assert.throws(() => patchSassUtils(patched), YaruBuildError, 'a second patch finds nothing to replace');
+});
+
+test('text on suggested and destructive buttons follows the palette instead of Yaru\'s white', () => {
+    const { text, count } = patchGtk3ButtonText(vendor('gtk/src/default/gtk-3.0/_common.scss'));
+    assert.equal(count, 7, 'Yaru 26.04.5.1 passes white in 7 places; a different count means Yaru changed');
+    assert.doesNotMatch(text, /\$b_color, white\)/);
+    const entry = gtk3Entry(vendor('common/accent-colors.scss.in'), builtin('jeweltone-dark'), '/v/gtk-dark.scss');
+    assert.match(entry, /@function chromancy-text-on\(\$c\)/);
+    assert.match(entry, /@return #17120a;/, 'accent buttons get on-primary');
 });

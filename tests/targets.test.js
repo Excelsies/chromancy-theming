@@ -31,7 +31,7 @@ test('every target has an id, a title, a plan function and declares its lock', (
 test('every op a target plans is tagged with that target', () => {
     const p = builtin('jeweltone-dark');
     for (const t of TARGETS) {
-        for (const op of t.plan(p, { paths }))
+        for (const op of t.plan(p, { paths: { ...paths, data: '/d' }, gtkTheme: 'Yaru-dark' }, { css: '' }))
             assert.equal(op.target, t.id);
     }
 });
@@ -101,4 +101,33 @@ test('style sets GNOME\'s light/dark preference from the palette variant', () =>
     assert.deepEqual([dark.schema, dark.key, dark.value], ['org.gnome.desktop.interface', 'color-scheme', 'prefer-dark']);
     const [light] = style.plan(builtin('jeweltone-light'), { paths });
     assert.equal(light.value, 'default');
+});
+
+test('gtk3 writes the rebuilt stylesheet and one import line, with images from the active Yaru theme', async () => {
+    const { gtk3 } = await import('../lib/targets/gtk3.js');
+    assert.equal(gtk3.build, 'gtk3');
+    const built = { css: 'a { background: url("assets/x.png"); } b { c: url("assets/check-symbolic.svg"); }' };
+    const ops = gtk3.plan(builtin('jeweltone-dark'), { paths, gtkTheme: 'Yaru-purple-dark' }, built);
+    const css = ops.find(o => o.kind === 'file');
+    assert.equal(css.path, '/home/a.b@example.com/.config/gtk-3.0/chromancy-theming.css');
+    assert.match(css.content, /^\/\* Chromancy Theming: Yaru rebuilt with the palette "Jeweltone Dark"/);
+    assert.match(css.content, /url\("resource:\/\/\/com\/ubuntu\/themes\/Yaru-purple-dark\/3\.0\/assets\/x\.png"\)/);
+    assert.match(css.content, /url\("resource:\/\/\/com\/ubuntu\/themes\/Yaru-purple-dark\/3\.0\/assets\/check-symbolic\.svg"\)/);
+    assert.doesNotMatch(css.content, /url\("assets\//);
+    const line = ops.find(o => o.kind === 'line');
+    assert.equal(line.path, '/home/a.b@example.com/.config/gtk-3.0/gtk.css');
+    assert.match(line.line, /^@import url\("file:\/\/\/home\/a\.b%40example\.com\/\.config\/gtk-3\.0\/chromancy-theming\.css"\);/);
+});
+
+test('gtk3 refuses a GTK theme that is not Yaru, since the images come from it', async () => {
+    const { gtk3 } = await import('../lib/targets/gtk3.js');
+    assert.throws(() => gtk3.plan(builtin('nord'), { paths, gtkTheme: 'Adwaita' }, { css: '' }), /Yaru/);
+});
+
+test('shell writes the rebuilt shell stylesheet where the helper extension loads it', async () => {
+    const { shell, SHELL_STYLESHEET } = await import('../lib/targets/shell.js');
+    assert.equal(shell.build, 'shell');
+    const ops = shell.plan(builtin('jeweltone-dark'), { paths: { ...paths, data: '/home/u/.local/share' } }, { css: 'stage { }' });
+    assert.deepEqual(ops, [{ target: 'shell', kind: 'file', path: `/home/u/.local/share/${SHELL_STYLESHEET}`,
+        content: '/* Chromancy Theming: Yaru shell theme rebuilt with the palette "Jeweltone Dark". Rewritten on every Apply. */\nstage { }' }]);
 });

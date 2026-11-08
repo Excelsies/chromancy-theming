@@ -6,7 +6,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {
-    YaruBuildError, gtk3Entry, gtk3Variables, markDefaults, patchSassUtils, preprocessShellScss, replaceShellAccent,
+    YaruBuildError, gtk3Entry, gtk3Variables, markDefaults, patchGtk3ButtonText, patchSassUtils, preprocessShellScss, replaceShellAccent,
     shellEntry, shellVariables,
 } from '../lib/yaru.js';
 
@@ -101,6 +101,10 @@ export async function buildGtk3(palette, { vendorDir, workDir, program }) {
                 throw new YaruBuildError(`GTK 3 _colors.scss defines $${n} ${counts[n]} times, expected 1`);
         }
         write(`${copy}/_colors.scss`, text);
+        const buttons = patchGtk3ButtonText(read(`${copy}/_common.scss`));
+        if (buttons.count === 0)
+            throw new YaruBuildError('GTK 3 _common.scss no longer passes white as button text; the patch needs updating');
+        write(`${copy}/_common.scss`, buttons.text);
         entry = gtk3Entry(template, palette, entryPoint);
     } else {
         entry = template.replace('@yaru_dark_variant@', 'true').replace('@yaru_accent_color@', 'purple')

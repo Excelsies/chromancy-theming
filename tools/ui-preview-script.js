@@ -1,7 +1,7 @@
 // Automation script for tools/ui-preview.sh: opens real apps and the main shell views in a headless
 // shell and saves screenshots to $CHROMANCY_SHOT_DIR, named with $CHROMANCY_SHOT_PREFIX.
 // $CHROMANCY_PREVIEW_APPS (comma-separated app ids) limits the apps; Chromancy Theming itself is captured
-// when its launcher is installed in the sandbox (tools/screenshots.sh does that).
+// when its launcher is installed in the sandbox (tools/lib/preview-setup.sh does that).
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Shell from 'gi://Shell';
@@ -105,6 +105,9 @@ export async function run() {
         if (!ok)
             continue;
         await sleep(2500);
+        // Ptyxis marks a window whose shell did not start (in a sandbox, no systemd manager to start it in).
+        t.check(`${id} is not in a failed state`, !app.get_windows()[0].get_title()?.endsWith('(Failed)'),
+            app.get_windows()[0].get_title());
         const r = app.get_windows()[0].get_frame_rect();
         await shoot(name, r.x, r.y, r.width, r.height);
         for (const w of app.get_windows())

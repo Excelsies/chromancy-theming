@@ -1,0 +1,14 @@
+# The shell Ptyxis runs in previews (tools/lib/preview-setup.sh): a neutral prompt, and the 16 terminal
+# colors as swatches and as text.
+PS1='~ $ '
+unset PROMPT_COMMAND
+printf '\e]0;Terminal\a'
+for row in 0 8; do
+    for i in $(seq $row $((row + 7))); do printf '\e[48;5;%sm    \e[0m ' "$i"; done
+    printf '\n'
+done
+printf '\n'
+for i in $(seq 1 7); do printf '\e[3%sm%s\e[0m ' "$i" "color$i"; done
+printf '\n'
+for i in $(seq 1 7); do printf '\e[1;9%sm%s\e[0m ' "$i" "bright$i"; done
+printf '\n\n'

@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 # Regenerates the README screenshots in docs/screenshots: Chromancy Theming's window, a few apps and the
 # main shell views with Jeweltone Dark and Jeweltone Light applied. Runs tools/ui-preview-script.js in a
-# headless shell with Chromancy installed inside the sandbox, so the desktop is untouched. The apps still
+# headless shell set up by tools/lib/preview-setup.sh, so the desktop is untouched. The apps still
 # reach the system bus, so look over every image before committing it: nothing personal should show.
 # usage: tools/screenshots.sh
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 out="$root/docs/screenshots"
-keep=(chromancy settings files text-editor qt6ct calendar)
-setup="$(mktemp "${TMPDIR:-/var/tmp}/chromancy-shots-setup.XXXXXX")"
-trap 'rm -f "$setup"' EXIT
-printf '#!/usr/bin/env bash\n"%s/tools/install.sh" >/dev/null\ngsettings set org.gnome.Settings last-panel background\n' \
-    "$root" >"$setup"
+keep=(chromancy settings files text-editor terminal qt6ct calendar)
 mkdir -p "$out"
 rm -f "$out"/*.png
-export CHROMANCY_SHOT_DIR="$out" CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_PREVIEW_SETUP="$setup"
-# Not the terminal or quick settings: they show the user name, host name and Wi-Fi network.
-export CHROMANCY_PREVIEW_APPS=io.github.excelsies.ChromancyTheming,org.gnome.Settings,org.gnome.Nautilus,org.gnome.TextEditor,qt6ct
+export CHROMANCY_SHOT_DIR="$out" CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_SHARE_SYSTEMD=1
+export CHROMANCY_PREVIEW_SETUP="$root/tools/lib/preview-setup.sh"
+# Not quick settings: it shows the Wi-Fi network.
+export CHROMANCY_PREVIEW_APPS=io.github.excelsies.ChromancyTheming,org.gnome.Settings,org.gnome.Nautilus,org.gnome.TextEditor,org.gnome.Ptyxis,qt6ct
 # The same extensions as this user's session: the ones turned off (Ubuntu Dock...) stay off.
 CHROMANCY_DISABLED_EXTENSIONS="$(gsettings get org.gnome.shell disabled-extensions 2>/dev/null || true)"
 export CHROMANCY_DISABLED_EXTENSIONS

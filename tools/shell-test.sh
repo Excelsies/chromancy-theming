@@ -10,6 +10,7 @@
 #        CHROMANCY_SANDBOX_HOME=1 puts HOME in the sandbox without applying a palette
 #        CHROMANCY_PREVIEW_SETUP=<script> runs that bash script inside the sandbox session before the shell starts
 #        CHROMANCY_DISABLED_EXTENSIONS="['a@b', ...]" sets the sandbox's org.gnome.shell disabled-extensions
+#        CHROMANCY_SHARE_SYSTEMD=1 lets apps reach the user's systemd manager (terminals need it to start a shell)
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 uuid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["uuid"])' "$root/extension/metadata.json")"
@@ -48,8 +49,15 @@ for script in "${scripts[@]}"; do
     # GNOME Shell keeps session files in the runtime dir (the Wayland socket, the
     # gnome-shell-disable-extensions crash marker). A headless shell started by any other harness at the
     # same time would share the user's and remove files this shell still needs, so each gets its own.
+    real_runtime="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
     export XDG_RUNTIME_DIR="$sandbox/runtime"
     mkdir -m 700 -p "$XDG_RUNTIME_DIR"
+    # Ptyxis starts each shell in a systemd scope through the user manager's socket, in the runtime dir's
+    # systemd/ folder. Sharing that one folder lets it; it holds none of the shell's session files, and the
+    # shell it starts still carries this sandbox's marker, so the reaper below ends it.
+    if [[ -n "${CHROMANCY_SHARE_SYSTEMD:-}" && -d "$real_runtime/systemd" ]]; then
+        ln -s "$real_runtime/systemd" "$XDG_RUNTIME_DIR/systemd"
+    fi
     mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_DATA_HOME/applications"
     ln -s "$root/extension" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     printf '[Desktop Entry]\nType=Application\nName=Chromancy Test Window\nExec=gjs -m %s\nDBusActivatable=false\n' \

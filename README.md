@@ -17,6 +17,7 @@ Jeweltone Dark and Jeweltone Light, two of the 50 built-in palettes:
 | Settings (libadwaita) | ![](docs/screenshots/jeweltone-dark-settings.png) | ![](docs/screenshots/jeweltone-light-settings.png) |
 | Files | ![](docs/screenshots/jeweltone-dark-files.png) | ![](docs/screenshots/jeweltone-light-files.png) |
 | Text Editor | ![](docs/screenshots/jeweltone-dark-text-editor.png) | ![](docs/screenshots/jeweltone-light-text-editor.png) |
+| Ptyxis terminal | ![](docs/screenshots/jeweltone-dark-terminal.png) | ![](docs/screenshots/jeweltone-light-terminal.png) |
 | Calendar (GNOME Shell) | ![](docs/screenshots/jeweltone-dark-calendar.png) | ![](docs/screenshots/jeweltone-light-calendar.png) |
 | Qt (qt6ct) | ![](docs/screenshots/jeweltone-dark-qt6ct.png) | ![](docs/screenshots/jeweltone-light-qt6ct.png) |
 

@@ -12,7 +12,8 @@ export CHROMANCY_SHOT_DIR="$out"
 # The previews show the shell as this user has it: the extensions they turned off (Ubuntu Dock, desktop
 # icons...) stay off in the sandbox too. Read from the real settings; nothing is written there.
 CHROMANCY_DISABLED_EXTENSIONS="$(gsettings get org.gnome.shell disabled-extensions 2>/dev/null || true)"
-export CHROMANCY_DISABLED_EXTENSIONS CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_SANDBOX_HOME=1
+export CHROMANCY_DISABLED_EXTENSIONS CHROMANCY_SHELL_MODE=ubuntu CHROMANCY_SANDBOX_HOME=1 CHROMANCY_SHARE_SYSTEMD=1
+export CHROMANCY_PREVIEW_SETUP="$root/tools/lib/preview-setup.sh"
 status=0
 for name in stock "$@"; do
     if [[ $name == stock ]]; then palette=""; else palette=$name; fi

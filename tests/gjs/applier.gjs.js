@@ -31,6 +31,9 @@ GLib.file_set_contents(`${schemaDir}/${SCHEMA}.gschema.xml`, `<schemalist>
     <key name="list" type="as"><default>[]</default></key>
     <key name="flag" type="b"><default>false</default></key>
   </schema>
+  <schema id="${SCHEMA}Relocatable">
+    <key name="name" type="s"><default>''</default></key>
+  </schema>
 </schemalist>`);
 const run = argv => {
     const [, , err, status] = GLib.spawn_sync(null, argv, null, GLib.SpawnFlags.SEARCH_PATH, null);
@@ -60,10 +63,10 @@ const t = {
     },
 };
 
-const settingsFor = () => new Gio.Settings({
-    settings_schema: Gio.SettingsSchemaSource.new_from_directory(schemaDir, Gio.SettingsSchemaSource.get_default(), false)
-        .lookup(SCHEMA, false),
-});
+const source = () => Gio.SettingsSchemaSource.new_from_directory(schemaDir, Gio.SettingsSchemaSource.get_default(), false);
+const settingsFor = () => new Gio.Settings({ settings_schema: source().lookup(SCHEMA, false) });
+const RELOCATABLE_PATHS = ['/io/github/excelsies/ChromancyTheming/Test/profiles/a/', '/io/github/excelsies/ChromancyTheming/Test/profiles/b/'];
+const relocatableAt = path => new Gio.Settings({ settings_schema: source().lookup(`${SCHEMA}Relocatable`, false), path });
 
 function makeEnv(n) {
     const base = `${root}/s${n}`;
@@ -75,15 +78,22 @@ function makeEnv(n) {
     const settings = settingsFor();
     for (const key of ['text', 'list', 'flag'])
         settings.reset(key);
+    for (const p of RELOCATABLE_PATHS)
+        relocatableAt(p).reset('name');
     const ensureDir = p => GLib.mkdir_with_parents(GLib.path_get_dirname(p), 0o700);
     return {
         system, ledgerPath, path,
         setting: key => ({ schema: SCHEMA, key, schemaDir }),
+        relocatable: path => ({ schema: `${SCHEMA}Relocatable`, path, key: 'name', schemaDir }),
         async seedFile(p, text) {
             ensureDir(p);
             GLib.file_set_contents(p, text);
         },
         async seedSetting(ref, value) {
+            if (ref.path) {
+                relocatableAt(ref.path).set_string(ref.key, value);
+                return;
+            }
             const type = { text: 's', list: 'as', flag: 'b' }[ref.key];
             settings.set_value(ref.key, new GLib.Variant(type, value));
         },

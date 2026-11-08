@@ -38,7 +38,7 @@ function resolveLinks(path) {
 
 const schemaCache = new Map();
 
-function settingsFor({ schema, schemaDir }) {
+function settingsFor({ schema, schemaDir, path }) {
     const cacheKey = `${schemaDir ?? ''}\n${schema}`;
     let found = schemaCache.get(cacheKey);
     if (!found) {
@@ -49,7 +49,7 @@ function settingsFor({ schema, schemaDir }) {
             throw new Error(`settings schema ${schema} not found${schemaDir ? ` in ${schemaDir}` : ''}`);
         schemaCache.set(cacheKey, found);
     }
-    return { settings: new Gio.Settings({ settings_schema: found }), schema: found };
+    return { settings: new Gio.Settings({ settings_schema: found, ...(path ? { path } : {}) }), schema: found };
 }
 
 function checkKey(schema, ref) {
@@ -57,7 +57,18 @@ function checkKey(schema, ref) {
         throw new Error(`settings schema ${ref.schema} has no key ${ref.key}`);
 }
 
+/** The keys of a schema, or null when it is not installed (in schemaDir, or system-wide). */
+export function schemaKeys(schema, schemaDir) {
+    try {
+        return settingsFor({ schema, schemaDir }).schema.list_keys();
+    } catch {
+        return null;
+    }
+}
+
 export const system = {
+    schemaKeys: async (schema, schemaDir) => schemaKeys(schema, schemaDir),
+
     /** @returns {Promise<string | null>} the file's text, or null when it does not exist */
     async readText(path) {
         try {

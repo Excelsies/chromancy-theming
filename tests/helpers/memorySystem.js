@@ -2,7 +2,9 @@
 // against this and against the real backend, so the two must behave the same.
 
 export const TEST_SCHEMA = 'io.github.excelsies.ChromancyTheming.Test';
+export const TEST_RELOCATABLE = 'io.github.excelsies.ChromancyTheming.TestRelocatable';
 const DEFAULTS = { text: '', list: [], flag: false };
+const RELOCATABLE_DEFAULTS = { name: '' };
 
 export function memoryEnv() {
     const files = new Map();
@@ -11,11 +13,12 @@ export function memoryEnv() {
     const brokenWrite = new Set();
     const clone = v => JSON.parse(JSON.stringify(v));
     const ioError = (op, path) => Object.assign(new Error(`${op} failed: ${path}`), { code: 'EIO' });
-    const keyOf = ref => `${ref.schema}/${ref.key}`;
+    const keyOf = ref => `${ref.schema}${ref.path ?? ''}/${ref.key}`;
     const defaultOf = ref => {
-        if (ref.schema !== TEST_SCHEMA || !(ref.key in DEFAULTS))
+        const table = ref.schema === TEST_SCHEMA ? DEFAULTS : ref.schema === TEST_RELOCATABLE && ref.path ? RELOCATABLE_DEFAULTS : null;
+        if (!table || !(ref.key in table))
             throw new Error(`no such setting: ${keyOf(ref)}`);
-        return DEFAULTS[ref.key];
+        return table[ref.key];
     };
 
     const system = {
@@ -54,6 +57,7 @@ export function memoryEnv() {
         ledgerPath: '/state/ledger.json',
         path: name => `/sandbox/${name}`,
         setting: key => ({ schema: TEST_SCHEMA, key }),
+        relocatable: path => ({ schema: TEST_RELOCATABLE, path, key: 'name' }),
         async seedFile(path, text) {
             files.set(path, text);
         },

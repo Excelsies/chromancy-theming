@@ -6,6 +6,7 @@
 //   env.ledgerPath             where the ledger lives
 //   env.setting(key)           a setting ref {schema, key, schemaDir?} on the test schema; keys:
 //                              'text' (s, default ''), 'list' (as, default []), 'flag' (b, default false)
+//   env.relocatable(path)      a setting ref for key 'name' (s, default '') of a relocatable schema at path
 //   env.seedFile(path, text)   create a file before the scenario acts
 //   env.seedSetting(ref, v)    set a user value before the scenario acts
 //   env.breakRead(path)        make reading that path fail
@@ -19,6 +20,9 @@ const settingOp = (env, key, value, target = 'fonts') => ({ target, kind: 'setti
 const lineOp = (env, name, url, target = 'gtk4') =>
     ({ target, kind: 'line', path: env.path(name), line: `@import url("${url}"); ${LINE_MARKER}` });
 const status = r => r.results.map(x => x.status);
+const iniOp = (env, name, group, key, value, target = 'qt') => ({ target, kind: 'ini', path: env.path(name), group, key, value });
+const listOp = (env, name, items, target = 'flatpak') =>
+    ({ target, kind: 'ini-list', path: env.path(name), group: 'Context', key: 'filesystems', items });
 
 export const scenarios = [
     {
@@ -232,6 +236,80 @@ export const scenarios = [
             t.deepEqual(r.results.map(x => `${x.target}:${x.status}`), ['gtk4:unchanged', 'fonts:restored']);
             t.deepEqual(await system.readSetting(env.setting('text')), { value: 'before', userSet: true });
             t.equal(await system.readText(env.path('b.css')), 'b', 'gtk3 was not in this apply');
+        },
+    },
+    {
+        name: 'an ini key is set in place and restore puts back only its old value',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('qt6ct.conf'), '[Appearance]\nstyle=Fusion\ncustom_palette=false\n');
+            await apply([iniOp(env, 'qt6ct.conf', 'Appearance', 'custom_palette', 'true'),
+                iniOp(env, 'qt6ct.conf', 'Appearance', 'color_scheme_path', '/c.conf')], { system, ledgerPath });
+            t.equal(await system.readText(env.path('qt6ct.conf')), '[Appearance]\nstyle=Fusion\ncustom_palette=true\ncolor_scheme_path=/c.conf\n');
+            // The user changes another key afterwards; restore keeps it.
+            await system.writeText(env.path('qt6ct.conf'), (await system.readText(env.path('qt6ct.conf'))).replace('Fusion', 'kvantum'));
+            const back = await restore({ system, ledgerPath });
+            t.deepEqual(status(back), ['restored', 'restored']);
+            t.equal(await system.readText(env.path('qt6ct.conf')), '[Appearance]\nstyle=kvantum\ncustom_palette=false\n');
+        },
+    },
+    {
+        name: 'an ini file created by apply is removed by restore',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await apply([iniOp(env, 'new.conf', 'Appearance', 'a', '1'), iniOp(env, 'new.conf', 'Fonts', 'b', '2')], { system, ledgerPath });
+            t.equal(await system.readText(env.path('new.conf')), '[Appearance]\na=1\n\n[Fonts]\nb=2\n');
+            await restore({ system, ledgerPath });
+            t.equal(await system.readText(env.path('new.conf')), null);
+        },
+    },
+    {
+        name: 'an ini list gains only missing items, and restore removes only those',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('global'), '[Context]\nfilesystems=home;xdg-config/gtk-3.0:ro;\n');
+            const r = await apply([listOp(env, 'global', ['xdg-config/gtk-4.0:ro', 'xdg-config/gtk-3.0:ro'])], { system, ledgerPath });
+            t.deepEqual(status(r), ['applied']);
+            t.equal(await system.readText(env.path('global')), '[Context]\nfilesystems=home;xdg-config/gtk-3.0:ro;xdg-config/gtk-4.0:ro;\n');
+            const again = await apply([listOp(env, 'global', ['xdg-config/gtk-4.0:ro', 'xdg-config/gtk-3.0:ro'])], { system, ledgerPath });
+            t.deepEqual(status(again), ['unchanged']);
+            // The user grants something else afterwards; restore keeps it, and the gtk-3.0 grant that was theirs.
+            await system.writeText(env.path('global'), '[Context]\nfilesystems=home;xdg-config/gtk-3.0:ro;xdg-config/gtk-4.0:ro;xdg-download;\n');
+            await restore({ system, ledgerPath });
+            t.equal(await system.readText(env.path('global')), '[Context]\nfilesystems=home;xdg-config/gtk-3.0:ro;xdg-download;\n');
+        },
+    },
+    {
+        name: 'an ini list in a file created by apply is removed by restore',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await apply([listOp(env, 'global', ['xdg-config/gtk-4.0:ro'])], { system, ledgerPath });
+            t.equal(await system.readText(env.path('global')), '[Context]\nfilesystems=xdg-config/gtk-4.0:ro;\n');
+            await restore({ system, ledgerPath });
+            t.equal(await system.readText(env.path('global')), null);
+        },
+    },
+    {
+        name: 'restore undoes in the reverse order of apply',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await apply([settingOp(env, 'text', 'first', 'conjure'), settingOp(env, 'flag', true, 'conjure')], { system, ledgerPath });
+            const back = await restore({ system, ledgerPath });
+            t.deepEqual(back.results.map(r => r.subject.split('/').pop()), ['flag', 'text']);
+        },
+    },
+    {
+        name: 'a setting of a relocatable schema is set at its path and restored there',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            const a = env.relocatable('/io/github/excelsies/ChromancyTheming/Test/profiles/a/');
+            const b = env.relocatable('/io/github/excelsies/ChromancyTheming/Test/profiles/b/');
+            await env.seedSetting(a, 'Jeweltone');
+            await apply([{ target: 'ptyxis', kind: 'setting', ...a, value: 'Chromancy' }], { system, ledgerPath });
+            t.deepEqual(await system.readSetting(a), { value: 'Chromancy', userSet: true });
+            t.deepEqual(await system.readSetting(b), { value: '', userSet: false }, 'another path is untouched');
+            await restore({ system, ledgerPath });
+            t.deepEqual(await system.readSetting(a), { value: 'Jeweltone', userSet: true });
         },
     },
 ];

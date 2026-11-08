@@ -42,3 +42,17 @@ the Aura, Gotham, Jellybeans, Molokai, Moonfly, Night Owl, Oceanic Next, One Hal
 Tomorrow Night palettes, come from terminal palettes in the Gogh collection
 (https://github.com/Gogh-Co/Gogh), as bundled with Ptyxis 50.1. Gogh is dual-licensed under the MIT
 License and the Apache License 2.0; these are used under the MIT License.
+
+## Yaru
+
+`vendor/yaru/` holds part of Yaru, Ubuntu's theme (https://github.com/ubuntu/yaru), at the commit
+and version named in `vendor/yaru/SOURCE`: the GTK 3 and GNOME Shell SCSS sources and the files they
+need. Yaru's code is licensed under the GNU General Public License version 3 (`vendor/yaru/COPYING`)
+and its graphics under Creative Commons Attribution-ShareAlike 4.0 (`vendor/yaru/LICENSE_CCBYSA`);
+its authors are listed in `vendor/yaru/AUTHORS`.
+
+Chromancy builds stylesheets from these sources with a palette. At build time it marks the color
+variables it sets as `!default`, writes the build's entry files, replaces the shell's runtime accent
+with the palette's, and changes `optimize-contrast()` in `sass-utils.scss` to try the other direction
+instead of stopping when a contrast target is out of reach. The stylesheets it builds are derived from
+Yaru and covered by Yaru's licenses.

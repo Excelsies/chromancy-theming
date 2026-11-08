@@ -10,6 +10,12 @@ It is in early development and not yet usable.
 
 GNOME Shell 50 (developed on Ubuntu 26.04).
 
+## Requirements for building
+
+`sassc` (`sudo apt install sassc`) rebuilds Yaru's GTK 3 and shell stylesheets with a palette.
+`rsvg-convert` (`sudo apt install librsvg2-bin`) recolors the few Yaru images that use the accent.
+
 ## License
 
-MIT. See `LICENSE`.
+MIT (see `LICENSE`), except `vendor/yaru/`, which is Yaru's GPL-3.0 and CC BY-SA 4.0 licensed source;
+see `THIRD_PARTY_NOTICES.md`.

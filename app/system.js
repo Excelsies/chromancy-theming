@@ -11,6 +11,8 @@ import GLib from 'gi://GLib';
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.File.prototype, 'replace_contents_bytes_async', 'replace_contents_finish');
 Gio._promisify(Gio.File.prototype, 'delete_async');
+Gio._promisify(Gio.File.prototype, 'replace_async');
+Gio._promisify(Gio.OutputStream.prototype, 'close_async');
 
 const MAX_LINKS = 40;
 
@@ -75,6 +77,13 @@ export const system = {
         } catch (e) {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
                 throw e;
+        }
+        if (text === '') {
+            // replace_contents_bytes_async never completes for an empty buffer (GIO asserts on it),
+            // so an empty file goes through a replace stream closed with nothing written.
+            const stream = await file.replace_async(null, false, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null);
+            await stream.close_async(GLib.PRIORITY_DEFAULT, null);
+            return;
         }
         await file.replace_contents_bytes_async(new GLib.Bytes(new TextEncoder().encode(text)), null, false,
             Gio.FileCreateFlags.NONE, null);

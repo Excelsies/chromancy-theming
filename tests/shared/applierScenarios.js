@@ -12,10 +12,12 @@
 //   env.breakWrite(path)       make writing that path fail
 // and `t` with equal(a, b, msg), deepEqual(a, b, msg), ok(v, msg), rejects(promise, pattern, msg).
 
-import { apply, restore } from '../../lib/applier.js';
+import { apply, restore, LINE_MARKER } from '../../lib/applier.js';
 
 const fileOp = (env, name, content, target = 'gtk4') => ({ target, kind: 'file', path: env.path(name), content });
 const settingOp = (env, key, value, target = 'fonts') => ({ target, kind: 'setting', ...env.setting(key), value });
+const lineOp = (env, name, url, target = 'gtk4') =>
+    ({ target, kind: 'line', path: env.path(name), line: `@import url("${url}"); ${LINE_MARKER}` });
 const status = r => r.results.map(x => x.status);
 
 export const scenarios = [
@@ -173,6 +175,63 @@ export const scenarios = [
             t.equal(await system.readText(env.path('old.css')), null);
             await restore({ system, ledgerPath });
             t.equal(await system.readText(env.path('old.css')), 'old');
+        },
+    },
+    {
+        name: 'a managed line goes at the top, keeps the user content, and restore removes only that line',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('gtk.css'), 'a { }\n');
+            await apply([lineOp(env, 'gtk.css', 'file:///x.css')], { system, ledgerPath });
+            t.equal(await system.readText(env.path('gtk.css')), `@import url("file:///x.css"); ${LINE_MARKER}\na { }\n`);
+            await system.writeText(env.path('gtk.css'), `${await system.readText(env.path('gtk.css'))}b { }\n`);
+            const back = await restore({ system, ledgerPath });
+            t.deepEqual(status(back), ['restored']);
+            t.equal(await system.readText(env.path('gtk.css')), 'a { }\nb { }\n', 'the later user edit survives');
+        },
+    },
+    {
+        name: 'a managed line is replaced, not duplicated, and the same line again is unchanged',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('gtk.css'), 'a { }\n');
+            await apply([lineOp(env, 'gtk.css', 'file:///x.css')], { system, ledgerPath });
+            await apply([lineOp(env, 'gtk.css', 'file:///y.css')], { system, ledgerPath });
+            t.equal(await system.readText(env.path('gtk.css')), `@import url("file:///y.css"); ${LINE_MARKER}\na { }\n`);
+            const again = await apply([lineOp(env, 'gtk.css', 'file:///y.css')], { system, ledgerPath });
+            t.deepEqual(status(again), ['unchanged']);
+        },
+    },
+    {
+        name: 'a file created only for a managed line is removed again on restore',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await apply([lineOp(env, 'gtk.css', 'file:///x.css')], { system, ledgerPath });
+            t.equal(await system.readText(env.path('gtk.css')), `@import url("file:///x.css"); ${LINE_MARKER}\n`);
+            await restore({ system, ledgerPath });
+            t.equal(await system.readText(env.path('gtk.css')), null);
+        },
+    },
+    {
+        name: 'a managed line without the marker is refused',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            const r = await apply([{ target: 'gtk4', kind: 'line', path: env.path('gtk.css'), line: '@import x;' }], { system, ledgerPath });
+            t.deepEqual(status(r), ['failed']);
+            t.equal(await system.readText(env.path('gtk.css')), null);
+        },
+    },
+    {
+        name: 'a subject a target stops writing is restored in the same apply; other targets are left alone',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedSetting(env.setting('text'), 'before');
+            await apply([fileOp(env, 'a.css', 'a', 'gtk4'), settingOp(env, 'text', 'palette font', 'fonts'),
+                fileOp(env, 'b.css', 'b', 'gtk3')], { system, ledgerPath, targets: ['gtk4', 'fonts', 'gtk3'] });
+            const r = await apply([fileOp(env, 'a.css', 'a', 'gtk4')], { system, ledgerPath, targets: ['gtk4', 'fonts'] });
+            t.deepEqual(r.results.map(x => `${x.target}:${x.status}`), ['gtk4:unchanged', 'fonts:restored']);
+            t.deepEqual(await system.readSetting(env.setting('text')), { value: 'before', userSet: true });
+            t.equal(await system.readText(env.path('b.css')), 'b', 'gtk3 was not in this apply');
         },
     },
 ];

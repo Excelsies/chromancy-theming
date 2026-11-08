@@ -14,6 +14,13 @@ if (GLib.getenv('GSETTINGS_BACKEND') !== 'memory') {
     imports.system.exit(2);
 }
 
+// A hung async call must fail the run, not stall it.
+const TIMEOUT_S = 60;
+GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, TIMEOUT_S, () => {
+    printerr(`FAIL: still running after ${TIMEOUT_S} s (a call that never completes?)`);
+    imports.system.exit(1);
+});
+
 const SCHEMA = 'io.github.excelsies.ChromancyTheming.Test';
 const root = GLib.dir_make_tmp('chromancy-test-XXXXXX');
 const schemaDir = `${root}/schemas`;
@@ -146,6 +153,19 @@ await realOnly('writeText keeps the file mode', async dir => {
     const mode = Gio.File.new_for_path(`${dir}/private.conf`).query_info('unix::mode', 0, null)
         .get_attribute_uint32('unix::mode') & 0o777;
     t.equal(mode.toString(8), '600');
+});
+
+await realOnly('writeText writes an empty file, atomically, keeping the mode', async dir => {
+    GLib.file_set_contents(`${dir}/empty.css`, 'old');
+    GLib.chmod(`${dir}/empty.css`, 0o600);
+    const info = () => Gio.File.new_for_path(`${dir}/empty.css`).query_info('unix::inode,unix::mode', 0, null);
+    const before = info().get_attribute_uint64('unix::inode');
+    await system.writeText(`${dir}/empty.css`, '');
+    t.equal(await system.readText(`${dir}/empty.css`), '');
+    t.ok(info().get_attribute_uint64('unix::inode') !== before, 'written in place');
+    t.equal((info().get_attribute_uint32('unix::mode') & 0o777).toString(8), '600');
+    await system.writeText(`${dir}/new-empty.css`, '');
+    t.equal(await system.readText(`${dir}/new-empty.css`), '', 'a new empty file');
 });
 
 await realOnly('writeText creates missing parent directories', async dir => {

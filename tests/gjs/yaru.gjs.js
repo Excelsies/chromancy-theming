@@ -11,6 +11,9 @@ import { resolvePalette } from '../../lib/derive.js';
 import { parseSource } from '../../lib/yaru.js';
 import { contrast } from '../../lib/color.js';
 
+// Budget: the 50 built-in palettes take about 1.8 s each to build (GTK 3 and shell), 90 s one at a time
+// here and on CI. Four at a time, the whole test takes about 27 s here; 120 s catches a hang and leaves
+// room for a slow runner.
 const TIMEOUT_S = 120;
 GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, TIMEOUT_S, () => {
     printerr(`FAIL: still running after ${TIMEOUT_S} s`);
@@ -124,16 +127,22 @@ const palettesDir = `${root}/data/palettes`;
 const ids = decoder.decode(GLib.spawn_sync(null, ['ls', palettesDir], null, GLib.SpawnFlags.SEARCH_PATH, null)[1])
     .split('\n').filter(f => f.endsWith('.json')).map(f => f.slice(0, -5));
 const broken = [];
-for (const id of ids) {
-    const palette = resolvePalette(parsePalette(id, JSON.parse(read(`${palettesDir}/${id}.json`))));
-    try {
-        await buildGtk3(palette, { vendorDir, workDir: work(`all-${id}-gtk3`) });
-        await buildShell(palette, { vendorDir, workDir: work(`all-${id}-shell`) });
-    } catch (e) {
-        broken.push(`${id}: ${e.message.split('\n')[0]}`);
+const queue = [...ids];
+const BUILDERS = 4;
+let built = 0;
+await Promise.all(Array.from({ length: BUILDERS }, async () => {
+    for (let id; (id = queue.shift());) {
+        const palette = resolvePalette(parsePalette(id, JSON.parse(read(`${palettesDir}/${id}.json`))));
+        try {
+            await buildGtk3(palette, { vendorDir, workDir: work(`all-${id}-gtk3`) });
+            await buildShell(palette, { vendorDir, workDir: work(`all-${id}-shell`) });
+            built++;
+        } catch (e) {
+            broken.push(`${id}: ${e.message.split('\n')[0]}`);
+        }
     }
-}
-check(ids.length === 50 && broken.length === 0, `all ${ids.length} built-in palettes build${broken.length ? `: ${broken.join('; ')}` : ''}`);
+}));
+check(ids.length === 50 && built === 50 && broken.length === 0, `all ${ids.length} built-in palettes build (${built} built)${broken.length ? `: ${broken.join('; ')}` : ''}`);
 
 let message = '';
 try {

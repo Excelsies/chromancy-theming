@@ -1,11 +1,12 @@
 // The command line: list palettes, apply one, restore. Returns an exit status: 0 when everything
 // asked for happened, 1 when something failed or was locked, 2 for a usage error.
 
-import { applyPalette, loadPalettes, restoreTargets } from './runner.js';
+import { applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig } from './runner.js';
+import { withFonts } from '../lib/config.js';
 import { TARGETS } from '../lib/targets/index.js';
 
 export const USAGE = `usage: chromancy-theming list
-       chromancy-theming apply <palette> [--targets=<id>,...]
+       chromancy-theming apply <palette> [--targets=<id>,...]   (default: the targets enabled in the app)
        chromancy-theming restore [<target>...]
 targets: ${TARGETS.map(t => t.id).join(', ')}`;
 
@@ -36,7 +37,9 @@ export async function run(args, { ctx, out, err }) {
         }
         if (command === 'apply' && rest.length >= 1) {
             const [id, ...opts] = rest;
-            let targets = known;
+            const { config, warnings } = await loadConfig(ctx);
+            warnings.forEach(w => err(w));
+            let targets = config.targets ?? known;
             for (const o of opts) {
                 const m = /^--targets=(.+)$/.exec(o);
                 if (!m)
@@ -54,7 +57,9 @@ export async function run(args, { ctx, out, err }) {
                 err(`no palette "${id}"; see: chromancy-theming list`);
                 return 2;
             }
-            return report((await applyPalette(palette, targets, ctx)).results, out);
+            const status = report((await applyPalette(withFonts(palette, config.fonts), targets, ctx)).results, out);
+            await saveConfig(ctx, { ...config, applied: id });
+            return status;
         }
         if (command === 'restore') {
             const unknown = rest.filter(t => !known.includes(t));
@@ -62,7 +67,12 @@ export async function run(args, { ctx, out, err }) {
                 err(`unknown target(s): ${unknown.join(', ')}`);
                 return 2;
             }
-            return report((await restoreTargets(rest.length ? rest : undefined, ctx)).results, out);
+            const status = report((await restoreTargets(rest.length ? rest : undefined, ctx)).results, out);
+            if (rest.length === 0) {
+                const { config } = await loadConfig(ctx);
+                await saveConfig(ctx, { ...config, applied: null });
+            }
+            return status;
         }
     } catch (e) {
         err(e.message);

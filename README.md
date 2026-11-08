@@ -4,9 +4,16 @@ Chromancy Theming applies one palette and one set of fonts across the GNOME desk
 GTK 3 apps, the GNOME Shell menus, Qt and Flatpak apps, and the config files of apps that keep
 their own colors, such as terminals.
 
-It is in early development: there is a command line, and the window is still to come.
+It is in early development: the window and the command line work; the blacklist and more targets are to come.
 
 ## Usage
+
+`tools/install.sh` adds Chromancy Theming to the app grid and links the shell extension (`--remove`
+takes both away). The window lists the palettes with a live preview; **Customize…** saves an edited copy
+as your own palette, **Fonts** sets fonts that replace the palette's, **Apply To** picks the targets, and
+**Apply** and **Restore** do the work. The shell extension starts after the next login.
+
+The same from the command line, using the targets and fonts chosen in the window:
 
 ```sh
 bin/chromancy-theming list                      # the palettes, built-in and your own

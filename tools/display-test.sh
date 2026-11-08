@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs each tests/display/*.gjs.js inside its own headless Weston compositor and private D-Bus
-# session, with a temporary XDG_CONFIG_HOME and in-memory GSettings, so nothing reaches the
-# user's desktop, config or settings. Usage: tools/display-test.sh [script...]
+# session, with temporary XDG config, data and state directories and in-memory GSettings, so nothing
+# reaches the user's desktop, files or settings. CHROMANCY_SHOT_DIR, when set, collects screenshots. Usage: tools/display-test.sh [script...]
 set -euo pipefail
 cd "$(dirname "$0")/.."
 command -v weston >/dev/null || { echo "display tests need weston" >&2; exit 2; }
@@ -19,7 +19,9 @@ for script in "${scripts[@]}"; do
         trap "kill $weston_pid 2>/dev/null" EXIT
         for _ in $(seq 100); do [ -S "$XDG_RUNTIME_DIR/$1" ] && break; sleep 0.1; done
         [ -S "$XDG_RUNTIME_DIR/$1" ] || { echo "weston did not start: $(cat "$2/weston.log")" >&2; exit 2; }
+        mkdir -p "$2/xdg/config" "$2/xdg/data" "$2/xdg/state"
         WAYLAND_DISPLAY="$1" GDK_BACKEND=wayland CHROMANCY_TEST_TMP="$2" \
+            XDG_CONFIG_HOME="$2/xdg/config" XDG_DATA_HOME="$2/xdg/data" XDG_STATE_HOME="$2/xdg/state" \
             gjs -m "$3" 2>"$2/stderr.log"
     ' _ "$socket" "$tmp" "$script" 2>"$tmp/session.log"; then
         :

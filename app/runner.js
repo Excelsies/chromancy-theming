@@ -8,6 +8,7 @@ import GLib from 'gi://GLib';
 
 import { apply, restore } from '../lib/applier.js';
 import { resolvePalette } from '../lib/derive.js';
+import { parseConfig, serializeConfig } from '../lib/config.js';
 import { parsePalette, PaletteError } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
 import { buildGtk3, buildShell } from './yaruBuild.js';
@@ -32,6 +33,7 @@ export function defaultContext(overrides = {}) {
         ledgerPath: `${state}/chromancy-theming/ledger.json`,
         builtinPalettes: `${appDir}/data/palettes`,
         userPalettes: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/palettes`,
+        configPath: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/config.json`,
         vendorDir: `${appDir}/vendor/yaru`,
     };
 }
@@ -135,4 +137,24 @@ export async function applyPalette(palette, targetIds, ctx) {
 /** Restores the given targets, or every target when none are given. */
 export function restoreTargets(targetIds, ctx) {
     return restore({ system, ledgerPath: ctx.ledgerPath, targets: targetIds });
+}
+
+/** The app's settings; an unreadable file gives the defaults and a warning. */
+export async function loadConfig(ctx) {
+    let text;
+    try {
+        text = await system.readText(ctx.configPath);
+    } catch (e) {
+        return { ...parseConfig(null, TARGETS.map(t => t.id)), warnings: [`config: cannot read ${ctx.configPath}: ${e.message}`] };
+    }
+    return parseConfig(text, TARGETS.map(t => t.id));
+}
+
+export function saveConfig(ctx, config) {
+    return system.writeText(ctx.configPath, serializeConfig(config));
+}
+
+/** Writes a user palette (~/.config/chromancy-theming/palettes/<id>.json). */
+export function savePalette(ctx, id, data) {
+    return system.writeText(`${ctx.userPalettes}/${id}.json`, `${JSON.stringify(data, null, 2)}\n`);
 }

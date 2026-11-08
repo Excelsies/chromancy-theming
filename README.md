@@ -271,8 +271,8 @@ The display suite needs `weston` (`sudo apt install weston`). The display, shell
 run in a sandbox: their own D-Bus session, runtime directory, XDG directories and settings, so the running
 desktop is never touched.
 CI runs `pnpm run check` on Ubuntu 26.04 with the Yaru theme installed, so the rebuilt themes and images
-are checked against Yaru's own. Ptyxis, btop and Text Editor are not installed there, so their checks are
-skipped.
+are checked against Yaru's own. Ptyxis, btop, Text Editor, qt6ct and Flatpak are not installed there, so
+their checks are skipped.
 
 - `tools/ui-preview.sh <out-dir> <palette>...` saves screenshots of real apps and the shell views with
   each palette next to stock, from a headless shell.

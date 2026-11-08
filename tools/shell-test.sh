@@ -8,6 +8,7 @@
 #        CHROMANCY_PREVIEW_PALETTE=<id> applies that palette inside the sandbox before the shell starts, with
 #        HOME in the sandbox too (apps started by the script see no personal files)
 #        CHROMANCY_SANDBOX_HOME=1 puts HOME in the sandbox without applying a palette
+#        CHROMANCY_PREVIEW_SETUP=<script> runs that bash script inside the sandbox session before the shell starts
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 uuid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["uuid"])' "$root/extension/metadata.json")"
@@ -59,13 +60,16 @@ for script in "${scripts[@]}"; do
         gsettings set org.gnome.shell enabled-extensions "['"'"'$1'"'"']"
         gsettings set org.gnome.shell disable-user-extensions false
         gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
+        if [[ -n "$6" ]]; then bash "$6"; fi
         if [[ -n "$4" ]]; then
             gsettings set org.gnome.desktop.interface gtk-theme Yaru-purple-dark
             gsettings set org.gnome.desktop.interface accent-color purple
             "$5/bin/chromancy-theming" apply "$4"
+            # What environment.d gives a real session at the next login.
+            export QT_QPA_PLATFORMTHEME=qt6ct
         fi
         exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 ${3:+--mode=$3} --automation-script="$2"
-    ' _ "$uuid" "$script" "${CHROMANCY_SHELL_MODE:-}" "${CHROMANCY_PREVIEW_PALETTE:-}" "$root" >"$log" 2>&1
+    ' _ "$uuid" "$script" "${CHROMANCY_SHELL_MODE:-}" "${CHROMANCY_PREVIEW_PALETTE:-}" "$root" "${CHROMANCY_PREVIEW_SETUP:-}" >"$log" 2>&1
     rc=$?
     set -e
     reap "$sandbox"

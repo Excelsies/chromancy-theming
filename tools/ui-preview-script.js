@@ -12,7 +12,8 @@ Gio._promisify(Shell.Screenshot.prototype, 'screenshot_area');
 const OUT = GLib.getenv('CHROMANCY_SHOT_DIR');
 const PREFIX = GLib.getenv('CHROMANCY_SHOT_PREFIX') ?? '';
 const APPS = ['org.gnome.Settings', 'org.gnome.Nautilus', 'org.gnome.TextEditor', 'org.gnome.Calculator',
-    'org.gnome.DiskUtility', 'org.gnome.seahorse.Application'];
+    'org.gnome.DiskUtility', 'org.gnome.seahorse.Application', 'qt6ct', 'org.gnome.Ptyxis'];
+const ONLY = GLib.getenv('CHROMANCY_PREVIEW_APPS')?.split(',');
 
 async function shoot(name, x, y, w, h) {
     x = Math.max(0, Math.round(x));
@@ -30,7 +31,7 @@ export async function run() {
     Main.overview.hide();
     await waitFor(() => !Main.overview.visible, 3000);
 
-    for (const id of APPS) {
+    for (const id of ONLY ?? APPS) {
         const app = Shell.AppSystem.get_default().lookup_app(`${id}.desktop`);
         if (!app) {
             console.log(`# ${id}: not installed`);

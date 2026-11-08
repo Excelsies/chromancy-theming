@@ -139,6 +139,38 @@ export const system = {
         await file.replace_contents_bytes_async(new GLib.Bytes(bytes), null, false, Gio.FileCreateFlags.NONE, null);
     },
 
+    /** @returns {Promise<string | null>} where a symlink points, or null when the path is not a symlink */
+    async readLink(path) {
+        try {
+            const info = Gio.File.new_for_path(path).query_info('standard::is-symlink,standard::symlink-target',
+                Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
+            return info.get_is_symlink() ? info.get_symlink_target() : null;
+        } catch (e) {
+            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+                return null;
+            throw e;
+        }
+    },
+
+    /** Points path at target, replacing what is there in one rename. */
+    async writeLink(path, target) {
+        const file = Gio.File.new_for_path(path);
+        try {
+            file.get_parent().make_directory_with_parents(null);
+        } catch (e) {
+            if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
+                throw e;
+        }
+        const temp = Gio.File.new_for_path(`${path}.chromancy-${GLib.random_int()}`);
+        temp.make_symbolic_link(target, null);
+        try {
+            temp.move(file, Gio.FileCopyFlags.OVERWRITE | Gio.FileCopyFlags.NOFOLLOW_SYMLINKS, null, null);
+        } catch (e) {
+            temp.delete(null);
+            throw e;
+        }
+    },
+
     async remove(path) {
         try {
             await Gio.File.new_for_path(path).delete_async(GLib.PRIORITY_DEFAULT, null);

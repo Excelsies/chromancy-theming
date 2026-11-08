@@ -8,6 +8,7 @@ const RELOCATABLE_DEFAULTS = { name: '' };
 
 export function memoryEnv() {
     const files = new Map();
+    const links = new Map();
     const settings = new Map();
     const brokenRead = new Set();
     const brokenWrite = new Set();
@@ -25,12 +26,23 @@ export function memoryEnv() {
         async readText(path) {
             if (brokenRead.has(path))
                 throw ioError('read', path);
+            if (links.has(path))
+                return this.readText(links.get(path));
             return files.has(path) ? files.get(path) : null;
+        },
+        async readLink(path) {
+            return links.get(path) ?? null;
+        },
+        async writeLink(path, target) {
+            if (brokenWrite.has(path))
+                throw ioError('write', path);
+            files.delete(path);
+            links.set(path, target);
         },
         async writeText(path, text) {
             if (brokenWrite.has(path))
                 throw ioError('write', path);
-            files.set(path, text);
+            files.set(links.get(path) ?? path, text);
         },
         async readBase64(path) {
             return this.readText(path);
@@ -41,7 +53,8 @@ export function memoryEnv() {
         async remove(path) {
             if (brokenWrite.has(path))
                 throw ioError('remove', path);
-            files.delete(path);
+            if (!links.delete(path))
+                files.delete(path);
         },
         async readSetting(ref) {
             const fallback = defaultOf(ref);
@@ -66,6 +79,9 @@ export function memoryEnv() {
         relocatable: path => ({ schema: TEST_RELOCATABLE, path, key: 'name' }),
         async seedFile(path, text) {
             files.set(path, text);
+        },
+        async seedLink(path, target) {
+            links.set(path, target);
         },
         async seedSetting(ref, value) {
             settings.set(keyOf(ref), clone(value));

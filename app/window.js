@@ -12,7 +12,7 @@ import { withFonts } from '../lib/config.js';
 import { FONT_ROLES } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
 import { PaletteEditor } from './editor.js';
-import { applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig, savePalette } from './runner.js';
+import { applyBlacklist, applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig, savePalette } from './runner.js';
 import { ScopedCss, allCardsCss, paletteCard, previewCss, previewWidget } from './widgets.js';
 
 const TARGET_DESCRIPTIONS = {
@@ -29,7 +29,9 @@ const TARGET_DESCRIPTIONS = {
     btop: 'A Chromancy theme for btop (needs terminal colors)',
     'text-editor': 'A style scheme for Text Editor\u2019s writing area (needs terminal colors)',
     templates: 'Your templates in ~/.config/chromancy-theming/templates',
+    blacklist: 'Keeps the apps on the Blacklist page out of the theme',
 };
+const SHELL_INTERFACE = 'io.github.excelsies.ChromancyTheming.Shell';
 const FONT_TITLES = { interface: 'Interface', document: 'Documents', monospace: 'Monospace' };
 const SHELL_PATH = '/io/github/excelsies/ChromancyTheming/Shell';
 
@@ -66,6 +68,7 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._stack.add_titled_with_icon(this._palettesPage(), 'palettes', 'Palettes', 'applications-graphics-symbolic');
         this._stack.add_titled_with_icon(this._fontsPage(), 'fonts', 'Fonts', 'font-x-generic-symbolic');
         this._stack.add_titled_with_icon(this._targetsPage(), 'targets', 'Apply To', 'emblem-system-symbolic');
+        this._stack.add_titled_with_icon(this._blacklistPage(), 'blacklist', 'Blacklist', 'action-unavailable-symbolic');
         view.set_content(this._stack);
         this._toasts.set_child(view);
         this.set_content(this._toasts);
@@ -272,6 +275,149 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._applyButton.set_sensitive(!this.busy && this.enabledTargets.length > 0);
     }
 
+    // ---- Blacklist
+
+    _blacklistPage() {
+        const page = new Adw.PreferencesPage();
+        this._blacklistGroup = new Adw.PreferencesGroup({ title: 'Apps Kept Out of the Theme',
+            description: 'These apps keep their own colors. A change takes effect the next time the app starts.' });
+        const buttons = new Gtk.Box({ spacing: 6 });
+        const add = new Gtk.Button({ label: 'Add App\u2026', css_classes: ['flat'] });
+        add.connect('clicked', () => this.openAppChooser());
+        this._pickButton = new Gtk.Button({ label: 'Pick a Window', css_classes: ['flat'] });
+        this._pickButton.connect('clicked', () => this.pickWindow());
+        buttons.append(add);
+        buttons.append(this._pickButton);
+        this._blacklistGroup.set_header_suffix(buttons);
+        this._blacklistRows = [];
+        page.add(this._blacklistGroup);
+        return page;
+    }
+
+    _showBlacklist() {
+        for (const row of this._blacklistRows)
+            this._blacklistGroup.remove(row);
+        this._blacklistRows = this.config.blacklist.map(id => {
+            const info = Gio.DesktopAppInfo.new(id);
+            const row = new Adw.ActionRow({ title: GLib.markup_escape_text(info?.get_display_name() ?? id, -1),
+                subtitle: info ? id : `${id} (not installed)` });
+            const icon = info?.get_icon();
+            row.add_prefix(icon ? new Gtk.Image({ gicon: icon, pixel_size: 32 }) : new Gtk.Image({ icon_name: 'application-x-executable-symbolic', pixel_size: 32 }));
+            const remove = new Gtk.Button({ icon_name: 'list-remove-symbolic', tooltip_text: 'Theme this app again',
+                valign: Gtk.Align.CENTER, css_classes: ['flat'] });
+            remove.connect('clicked', () => this.removeFromBlacklist(id));
+            row.add_suffix(remove);
+            this._blacklistGroup.add(row);
+            return row;
+        });
+        if (this._blacklistRows.length === 0) {
+            const empty = new Adw.ActionRow({ title: 'No apps', subtitle: 'Every app follows the theme.' });
+            this._blacklistGroup.add(empty);
+            this._blacklistRows.push(empty);
+        }
+        this._pickButton.set_sensitive(this.extensionRunning === true);
+        this._pickButton.set_tooltip_text(this.extensionRunning ? 'Click a window of the app'
+            : 'Needs the Chromancy Theming shell extension, which starts after you log out and back in');
+    }
+
+    /** Asks, then keeps an app out of the theme. Resolves to the results, or null when declined. */
+    async confirmBlacklist(id) {
+        const info = Gio.DesktopAppInfo.new(id);
+        const name = info?.get_display_name() ?? id;
+        if (this.config.blacklist.includes(id)) {
+            this.toast(`${name} is already on the blacklist`);
+            return null;
+        }
+        if (!await this._confirm(`Stop Theming \u201c${name}\u201d?`,
+            `${name} will keep its own colors from the next time it starts.`, 'Stop Theming'))
+            return null;
+        return this.addToBlacklist(id);
+    }
+
+    addToBlacklist(id) {
+        return this._changeBlacklist([...new Set([...this.config.blacklist, id])], id, true);
+    }
+
+    removeFromBlacklist(id) {
+        return this._changeBlacklist(this.config.blacklist.filter(x => x !== id), id, false);
+    }
+
+    async _changeBlacklist(list, id, added) {
+        if (this.busy)
+            return null;
+        this._setBusy(true);
+        try {
+            this.config = { ...this.config, blacklist: list };
+            await this._saveConfig();
+            this._showBlacklist();
+            const { results } = await applyBlacklist(this.config, this.ctx);
+            const name = Gio.DesktopAppInfo.new(id)?.get_display_name() ?? id;
+            this._report(added ? `${name} keeps its own colors` : `${name} follows the theme again`, results, false);
+            return results;
+        } catch (e) {
+            this.toast(`The blacklist was not applied: ${e.message}`);
+            return null;
+        } finally {
+            this._setBusy(false);
+        }
+    }
+
+    /** A searchable list of installed apps; choosing one asks, then blacklists it. */
+    openAppChooser() {
+        const dialog = new Adw.Dialog({ title: 'Add App', content_width: 420, content_height: 560 });
+        const view = new Adw.ToolbarView();
+        view.add_top_bar(new Adw.HeaderBar());
+        const search = new Gtk.SearchEntry({ placeholder_text: 'Search apps', margin_start: 12, margin_end: 12, margin_top: 6, margin_bottom: 6 });
+        view.add_top_bar(search);
+        const list = new Gtk.ListBox({ selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'],
+            margin_start: 12, margin_end: 12, margin_bottom: 12, valign: Gtk.Align.START });
+        const apps = Gio.AppInfo.get_all().filter(a => a.should_show() && a.get_id())
+            .sort((a, b) => a.get_display_name().localeCompare(b.get_display_name()));
+        for (const app of apps) {
+            const row = new Adw.ActionRow({ title: GLib.markup_escape_text(app.get_display_name(), -1), activatable: true });
+            row.add_prefix(new Gtk.Image({ gicon: app.get_icon() ?? Gio.ThemedIcon.new('application-x-executable'), pixel_size: 32 }));
+            row.appId = app.get_id();
+            row.appName = app.get_display_name().toLowerCase();
+            row.connect('activated', () => {
+                dialog.close();
+                this.confirmBlacklist(row.appId);
+            });
+            list.append(row);
+        }
+        search.connect('search-changed', () => {
+            const q = search.get_text().toLowerCase();
+            for (let r = list.get_first_child(); r; r = r.get_next_sibling())
+                r.set_visible(!q || r.appName.includes(q) || r.appId.toLowerCase().includes(q));
+        });
+        const scroller = new Gtk.ScrolledWindow({ child: list, vexpand: true });
+        view.set_content(scroller);
+        dialog.set_child(view);
+        dialog.present(this);
+        this.appChooser = dialog;
+        return dialog;
+    }
+
+    /** Asks the shell extension to let the user click a window, then offers to blacklist its app. */
+    pickWindow() {
+        return new Promise(resolve => {
+            Gio.DBus.session.call('org.gnome.Shell', SHELL_PATH, SHELL_INTERFACE, 'PickWindow', null,
+                new GLib.VariantType('(ss)'), Gio.DBusCallFlags.NONE, 35000, null, (conn, res) => {
+                    let id;
+                    try {
+                        [id] = conn.call_finish(res).deepUnpack();
+                    } catch (e) {
+                        const remote = Gio.DBusError.get_remote_error(e) ?? '';
+                        if (!remote.endsWith('.Cancelled'))
+                            this.toast(remote.endsWith('.NoApp') ? 'That window does not belong to an installed app'
+                                : remote.endsWith('.Timeout') ? 'No window was picked' : `Picking failed: ${e.message}`);
+                        resolve(null);
+                        return;
+                    }
+                    resolve(this.confirmBlacklist(id));
+                });
+        });
+    }
+
     // ---- Loading and saving
 
     async _load() {
@@ -280,6 +426,7 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._reloadPalettes();
         this._showFonts();
         this._showTargets();
+        this._showBlacklist();
         const first = this.palettes.has(config.palette) ? config.palette
             : this.palettes.has(config.applied) ? config.applied : this.palettes.keys().next().value;
         this.select(first);
@@ -317,6 +464,7 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
                     running = false;
                 }
                 this.extensionRunning = running;
+                this._showBlacklist();
                 this._banner.set_title('The Chromancy Theming shell extension is not running, so the shell keeps its theme. It starts after you log out and back in.');
                 this._banner.set_revealed(!running);
             });
@@ -338,7 +486,8 @@ export const ChromancyWindow = GObject.registerClass(class ChromancyWindow exten
         this._setBusy(true);
         try {
             const palette = this.selected;
-            const { results } = await applyPalette(withFonts(palette, this.config.fonts), this.enabledTargets, this.ctx);
+            const { results } = await applyPalette(withFonts(palette, this.config.fonts), this.enabledTargets,
+                { ...this.ctx, blacklist: this.config.blacklist });
             this.config = { ...this.config, applied: palette.id };
             await this._saveConfig();
             this._fillPalettes();

@@ -89,6 +89,10 @@ function makeEnv(n) {
             ensureDir(p);
             GLib.file_set_contents(p, text);
         },
+        async seedLink(p, target) {
+            ensureDir(p);
+            Gio.File.new_for_path(p).make_symbolic_link(target, null);
+        },
         async seedSetting(ref, value) {
             if (ref.path) {
                 relocatableAt(ref.path).set_string(ref.key, value);

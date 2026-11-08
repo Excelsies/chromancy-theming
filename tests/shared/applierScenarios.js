@@ -326,4 +326,35 @@ export const scenarios = [
             t.equal(await system.readBase64(env.path('a.png')), null);
         },
     },
+    {
+        name: 'a symlink is pointed elsewhere and restore points it back',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('real.css'), 'user css');
+            await env.seedLink(env.path('snap-gtk.css'), env.path('real.css'));
+            const op = { target: 'blacklist', kind: 'symlink', path: env.path('snap-gtk.css'), linkTarget: env.path('unthemed.css') };
+            t.deepEqual(status(await apply([op], { system, ledgerPath })), ['applied']);
+            t.equal(await system.readLink(env.path('snap-gtk.css')), env.path('unthemed.css'));
+            t.deepEqual(status(await apply([op], { system, ledgerPath })), ['unchanged']);
+            await restore({ system, ledgerPath });
+            t.equal(await system.readLink(env.path('snap-gtk.css')), env.path('real.css'));
+            t.equal(await system.readText(env.path('real.css')), 'user css', 'the link target itself is untouched');
+        },
+    },
+    {
+        name: 'a symlink made where nothing was is removed again; a regular file is put back as a file',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            await env.seedFile(env.path('plain.css'), 'mine');
+            await apply([{ target: 'blacklist', kind: 'symlink', path: env.path('new-link.css'), linkTarget: env.path('x.css') },
+                { target: 'blacklist', kind: 'symlink', path: env.path('plain.css'), linkTarget: env.path('x.css') }], { system, ledgerPath });
+            t.equal(await system.readLink(env.path('plain.css')), env.path('x.css'));
+            await restore({ system, ledgerPath });
+            t.equal(await system.readLink(env.path('new-link.css')), null);
+            t.equal(await system.readText(env.path('new-link.css')), null);
+            t.equal(await system.readLink(env.path('plain.css')), null, 'a file again, not a link');
+            t.equal(await system.readText(env.path('plain.css')), 'mine');
+            t.equal(await system.readText(env.path('x.css')), null, 'nothing was written through the link');
+        },
+    },
 ];

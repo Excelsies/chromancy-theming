@@ -39,9 +39,34 @@ Targets:
 | `btop` | A Chromancy theme for btop, selected in `btop.conf` |
 | `text-editor` | A style scheme for Text Editor's writing area, from the terminal colors |
 | `templates` | Your own templates (below) |
+| `blacklist` | Keeps the apps on the blacklist out of the theme (below) |
 
 Targets whose app is not installed are skipped. Ptyxis, btop and Text Editor need the palette's terminal
 colors; with a palette that has none they go back to how they were before Chromancy.
+
+### Keeping apps out of the theme
+
+The window's **Blacklist** page adds an app from a list, or by clicking one of its windows (**Pick a
+Window**, which needs the shell extension). From the command line:
+
+```sh
+bin/chromancy-theming blacklist                                  # list
+bin/chromancy-theming blacklist add org.gnome.Calculator.desktop
+bin/chromancy-theming blacklist remove org.gnome.Calculator.desktop
+```
+
+A blacklisted app keeps its own colors from its next start:
+
+- a regular app starts through `bin/chromancy-theming-unthemed` (a copy of its launcher in
+  `~/.local/share/applications`, and of its D-Bus service when it has one), which hides Chromancy's
+  stylesheets from that app only; your own `gtk.css` rules still apply. Started from a terminal, it is
+  themed as usual;
+- a Flatpak app is denied the GTK stylesheet folders (`~/.local/share/flatpak/overrides/<app-id>`);
+- a Snap app's own `gtk.css` links point at a copy of your `gtk.css` without Chromancy's line (a Snap must
+  have been run once first);
+- Ptyxis, btop and Text Editor keep their own colors: their Chromancy targets are skipped.
+
+Taking an app off the blacklist, or Restore, removes all of it.
 
 ### Your own templates
 

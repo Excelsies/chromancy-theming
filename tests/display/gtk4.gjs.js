@@ -24,11 +24,13 @@ function draw(mode) {
     for (const op of gtk4.plan(palette, { paths: { config } })) {
         if (op.kind === 'file')
             GLib.file_set_contents(op.path, op.content);
-        else if (mode === 'applied')
+        else if (mode !== 'control')
             GLib.file_set_contents(op.path, withLine('window.user-rule { }\n', op.line));
     }
     const env = GLib.environ_setenv(GLib.get_environ(), 'XDG_CONFIG_HOME', config, true);
-    const [, out, err, status] = GLib.spawn_sync(null, ['gjs', '-m', `${here}/gtk4-app.js`], env,
+    // A blacklisted app starts through the wrapper, which hides Chromancy's stylesheet from it.
+    const wrapper = mode === 'blacklisted' ? [`${here}/../../bin/chromancy-theming-unthemed`] : [];
+    const [, out, err, status] = GLib.spawn_sync(null, [...wrapper, 'gjs', '-m', `${here}/gtk4-app.js`], env,
         GLib.SpawnFlags.SEARCH_PATH, null);
     if (status !== 0)
         throw new Error(`probe app failed: ${new TextDecoder().decode(err)}`);
@@ -49,6 +51,9 @@ check(applied.suggested === palette.colors['on-primary'], `text on a suggested b
 check(applied.accent !== control.accent, `accent text follows the palette (got ${applied.accent}, Ubuntu's ${control.accent})`);
 check(control.text !== palette.colors['on-surface'], `control run without the import line draws other colors (got ${control.text})`);
 check(control.suggested !== palette.colors['on-primary'], `control run suggested text differs (got ${control.suggested})`);
+const blacklisted = draw('blacklisted');
+check(JSON.stringify(blacklisted) === JSON.stringify(control),
+    `started through the blacklist wrapper, the app draws Ubuntu's colors like the control run (${JSON.stringify(blacklisted)})`);
 
 if (failures)
     imports.system.exit(1);

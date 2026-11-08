@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Runs an app without Chromancy Theming's theme: Chromancy's two stylesheets (gtk-4.0 and gtk-3.0
+# chromancy-theming.css) are hidden from this process only, behind an empty file, and Qt apps use their
+# default platform theme. The user's own gtk.css rules still apply. Blacklisted apps' launchers and D-Bus
+# services run through this. If the sandbox cannot be set up, the app runs normally (themed) and the
+# reason goes to the journal: an app that does not start is worse than one in the wrong colors.
+# usage: chromancy-theming-unthemed <command> [args...]
+[[ $# -gt 0 ]] || { echo "usage: $0 <command> [args...]" >&2; exit 2; }
+unset QT_QPA_PLATFORMTHEME
+config="${XDG_CONFIG_HOME:-$HOME/.config}"
+empty="${XDG_RUNTIME_DIR:-/tmp}/chromancy-theming-empty.css"
+[[ -f "$empty" ]] || : > "$empty"
+binds=()
+for css in "$config/gtk-4.0/chromancy-theming.css" "$config/gtk-3.0/chromancy-theming.css"; do
+    [[ -f "$css" ]] && binds+=(--ro-bind "$empty" "$css")
+done
+log() {
+    if command -v logger >/dev/null; then logger -t chromancy-theming "$*"; else echo "chromancy-theming: $*" >&2; fi
+}
+if [[ ${#binds[@]} -eq 0 ]]; then
+    exec "$@"
+fi
+if ! command -v bwrap >/dev/null; then
+    log "bwrap is not installed; running $1 with the theme"
+    exec "$@"
+fi
+if ! error=$(bwrap --dev-bind / / "${binds[@]}" -- true 2>&1); then
+    log "cannot hide the theme from $1 (bwrap: $error); running it with the theme"
+    exec "$@"
+fi
+exec bwrap --dev-bind / / "${binds[@]}" -- "$@"

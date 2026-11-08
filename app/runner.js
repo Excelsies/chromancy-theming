@@ -13,6 +13,7 @@ import { parseConfig, serializeConfig } from '../lib/config.js';
 import { parsePalette, PaletteError } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
 import { TargetSkipped } from '../lib/targets/common.js';
+import { APP_TARGETS } from '../lib/blacklist.js';
 import { buildGtk3, buildShell } from './yaruBuild.js';
 import { system } from './system.js';
 
@@ -39,6 +40,9 @@ export function defaultContext(overrides = {}) {
         userTemplates: `${overrides.config ?? GLib.get_user_config_dir()}/chromancy-theming/templates`,
         templatesDir: `${appDir}/data/templates`,
         home: overrides.home ?? GLib.get_home_dir(),
+        systemDataDirs: overrides.systemDataDirs ?? GLib.get_system_data_dirs(),
+        wrapper: `${appDir}/bin/chromancy-theming-unthemed`,
+        blacklist: [],
         vendorDir: `${appDir}/vendor/yaru`,
     };
 }
@@ -107,6 +111,13 @@ export async function applyPalette(palette, targetIds, ctx) {
         for (const target of TARGETS.filter(t => targetIds.includes(t.id))) {
             const fail = (status, error) => results.push({ target: target.id, subject: 'target', status, error });
             const targetCtx = { ...ctx, system };
+            const blacklistedApp = Object.entries(APP_TARGETS).find(([app, t]) => t === target.id && (ctx.blacklist ?? []).includes(app));
+            if (blacklistedApp) {
+                // A blacklisted app keeps its own colors: what this target applied before is restored.
+                fail('skipped', `${blacklistedApp[0]} is blacklisted`);
+                planned.push(target.id);
+                continue;
+            }
             let info = {};
             if (target.inspect) {
                 try {
@@ -142,7 +153,10 @@ export async function applyPalette(palette, targetIds, ctx) {
                     if (built.assetsWarning)
                         results.push({ target: target.id, subject: 'images', status: 'skipped', error: built.assetsWarning });
                 }
-                ops.push(...target.plan(palette, { ...planCtx, info }, built));
+                const planned_ = target.plan(palette, { ...planCtx, info }, built);
+                ops.push(...planned_);
+                for (const note of planned_.notes ?? [])
+                    results.push({ target: target.id, subject: 'note', status: 'skipped', error: note });
                 planned.push(target.id);
             } catch (e) {
                 if (e instanceof TargetSkipped) {
@@ -184,4 +198,16 @@ export function saveConfig(ctx, config) {
 /** Writes a user palette (~/.config/chromancy-theming/palettes/<id>.json). */
 export function savePalette(ctx, id, data) {
     return system.writeText(`${ctx.userPalettes}/${id}.json`, `${JSON.stringify(data, null, 2)}\n`);
+}
+
+/**
+ * Applies the blacklist (and the targets of blacklisted apps that have their own, when enabled) with the
+ * applied palette, after the blacklist changed. Resolves to the results.
+ */
+export async function applyBlacklist(config, ctx) {
+    const { palettes } = loadPalettes(ctx);
+    const palette = palettes.get(config.applied) ?? palettes.get(config.palette) ?? palettes.values().next().value;
+    const enabled = config.targets ?? TARGETS.map(t => t.id);
+    const appTargets = Object.values(APP_TARGETS).filter(t => enabled.includes(t) && config.applied);
+    return applyPalette(palette, ['blacklist', ...appTargets], { ...ctx, blacklist: config.blacklist });
 }

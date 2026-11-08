@@ -1,13 +1,14 @@
 // The command line: list palettes, apply one, restore. Returns an exit status: 0 when everything
 // asked for happened, 1 when something failed or was locked, 2 for a usage error.
 
-import { applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig } from './runner.js';
+import { applyBlacklist, applyPalette, loadConfig, loadPalettes, restoreTargets, saveConfig } from './runner.js';
 import { withFonts } from '../lib/config.js';
 import { TARGETS } from '../lib/targets/index.js';
 
 export const USAGE = `usage: chromancy-theming list
        chromancy-theming apply <palette> [--targets=<id>,...]   (default: the targets enabled in the app)
        chromancy-theming restore [<target>...]
+       chromancy-theming blacklist [add|remove <app-id>]   (app ids as in org.gnome.Nautilus.desktop)
 targets: ${TARGETS.map(t => t.id).join(', ')}`;
 
 function report(results, out) {
@@ -57,9 +58,28 @@ export async function run(args, { ctx, out, err }) {
                 err(`no palette "${id}"; see: chromancy-theming list`);
                 return 2;
             }
-            const status = report((await applyPalette(withFonts(palette, config.fonts), targets, ctx)).results, out);
+            const status = report((await applyPalette(withFonts(palette, config.fonts), targets, { ...ctx, blacklist: config.blacklist })).results, out);
             await saveConfig(ctx, { ...config, applied: id });
             return status;
+        }
+        if (command === 'blacklist') {
+            const { config, warnings } = await loadConfig(ctx);
+            warnings.forEach(w => err(w));
+            if (rest.length === 0) {
+                config.blacklist.forEach(id => out(id));
+                return 0;
+            }
+            const [action, id, ...extra] = rest;
+            if (!['add', 'remove'].includes(action) || !id || extra.length || !/^[^/]+\.desktop$/.test(id))
+                return usage(err);
+            const set = new Set(config.blacklist);
+            if (action === 'add')
+                set.add(id);
+            else
+                set.delete(id);
+            const next = { ...config, blacklist: [...set] };
+            await saveConfig(ctx, next);
+            return report((await applyBlacklist(next, ctx)).results, out);
         }
         if (command === 'restore') {
             const unknown = rest.filter(t => !known.includes(t));

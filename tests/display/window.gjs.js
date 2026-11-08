@@ -59,7 +59,7 @@ async function main(app) {
     check(await waitFor(() => win._banner.get_revealed(), 4000), 'with no shell extension running, the banner says so');
 
     // The checks below are about the desktop targets; the others have their own test (targets.gjs.js).
-    for (const id of ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates'])
+    for (const id of ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates', 'blacklist'])
         await win.setTarget(id, false);
     win.select('jeweltone-dark');
     await sleep(300);
@@ -108,6 +108,23 @@ async function main(app) {
     const saved = JSON.parse(read(`${ctx.userPalettes}/golden-hour.json`) ?? '{}');
     check(saved.colors?.primary === '#d08a3c' && saved.terminal?.ansi?.length === 16, 'with its colors and the terminal colors it started from');
     check(win.selected?.id === 'golden-hour', 'and selects it');
+
+    const calc = `${ctx.paths.data}/applications/org.gnome.Calculator.desktop`;
+    results = await win.addToBlacklist('org.gnome.Calculator.desktop');
+    check(results && !results.some(r => r.status === 'failed'), 'blacklisting an app applies without failures');
+    check(read(calc)?.includes('chromancy-theming-unthemed'), 'its launcher now runs through the wrapper');
+    check(config().blacklist.includes('org.gnome.Calculator.desktop'), 'the blacklist is saved');
+    win._stack.set_visible_child_name('blacklist');
+    await sleep(300);
+    shot(win, 'blacklist');
+    const chooser = win.openAppChooser();
+    await sleep(500);
+    shot(win, 'add-app');
+    chooser.close();
+    await sleep(300);
+    await win.removeFromBlacklist('org.gnome.Calculator.desktop');
+    check(read(calc) === null && !config().blacklist.length, 'taking it off the blacklist removes the override');
+    win._stack.set_visible_child_name('palettes');
 
     results = await win.restoreAll();
     check(results.every(r => r.status !== 'failed'), 'Restore succeeds');

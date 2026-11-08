@@ -17,6 +17,8 @@ const FAKE_INFO = {
     btop: { template: 'theme[main_fg]="{{term-foreground}}"' },
     'text-editor': { template: '<x c="{{ansi1}}"/>' },
     templates: { home: '/home/u', templates: [{ name: 'a.tmpl', text: 'chromancy-output: ~/.config/a.conf\nfg={{on-surface}}' }] },
+    blacklist: { home: '/home/u', wrapper: '/app/bin/chromancy-theming-unthemed', gtkCss: { '3.0': null, '4.0': null },
+        apps: [{ id: 'a.desktop', kind: 'host', dbus: false, desktop: '[Desktop Entry]\nExec=a\n' }] },
 };
 const builtin = id => resolvePalette(parsePalette(id,
     JSON.parse(readFileSync(new URL(`../data/palettes/${id}.json`, import.meta.url), 'utf8'))));
@@ -261,4 +263,33 @@ test('gtk3 writes the recolored accent images and points only those at them', as
     assert.match(css, /url\("file:\/\/\/home\/u\/\.local\/share\/chromancy-theming\/gtk-3\.0\/assets\/text-select-end-active\.png"\)/);
     assert.match(css, /url\("file:\/\/\/home\/u\/\.local\/share\/chromancy-theming\/gtk-3\.0\/assets\/text-select-end-active%402\.png"\)/, '"@" is escaped in the URL');
     assert.match(css, /url\("resource:\/\/\/com\/ubuntu\/themes\/Yaru-purple-dark\/3\.0\/assets\/check-symbolic\.svg"\)/);
+});
+
+test('the blacklist plans a wrapped launcher (and D-Bus service), a Flatpak denial, or Snap links per app', async () => {
+    const { blacklist } = await import('../lib/targets/blacklist.js');
+    const W = '/app/bin/chromancy-theming-unthemed';
+    const marker = '/* chromancy-theming */';
+    const info = {
+        home: '/home/u', wrapper: W,
+        gtkCss: { '3.0': null, '4.0': `@import url("file:///x.css"); ${marker}\nwindow { }\n` },
+        apps: [
+            { id: 'org.gnome.Settings.desktop', kind: 'host', dbus: true, desktop: '[Desktop Entry]\nExec=gnome-control-center\n',
+                service: '[D-BUS Service]\nName=org.gnome.Settings\nExec=/usr/bin/gnome-control-center --gapplication-service\n' },
+            { id: 'org.x.App.desktop', kind: 'flatpak', flatpakId: 'org.x.App', desktop: '' },
+            { id: 'firefox_firefox.desktop', kind: 'snap', snapName: 'firefox', snapCurrent: '1234', desktop: '' },
+            { id: 'cold_cold.desktop', kind: 'snap', snapName: 'cold', snapCurrent: null, desktop: '' },
+            { id: 'gone.desktop', missing: true },
+        ],
+    };
+    const ops = blacklist.plan(null, { paths: { data: '/home/u/.local/share', config: '/home/u/.config' }, info });
+    const by = p => ops.find(o => o.path === p);
+    assert.match(by('/home/u/.local/share/applications/org.gnome.Settings.desktop').content, /^Exec=\/app\/bin\/chromancy-theming-unthemed gnome-control-center$/m);
+    assert.match(by('/home/u/.local/share/dbus-1/services/org.gnome.Settings.service').content,
+        /^Exec=\/app\/bin\/chromancy-theming-unthemed \/usr\/bin\/gnome-control-center --gapplication-service$/m);
+    assert.deepEqual(by('/home/u/.local/share/flatpak/overrides/org.x.App').items, ['!xdg-config/gtk-4.0', '!xdg-config/gtk-3.0']);
+    assert.equal(by('/home/u/snap/firefox/current/.config/gtk-4.0/gtk.css').linkTarget, '/home/u/.config/gtk-4.0/chromancy-theming-unthemed.css');
+    assert.equal(by('/home/u/.config/gtk-4.0/chromancy-theming-unthemed.css').content, 'window { }\n', 'the user\'s gtk.css without Chromancy\'s line');
+    assert.equal(by('/home/u/.config/gtk-3.0/chromancy-theming-unthemed.css').content, '');
+    assert.ok(!ops.some(o => o.path.includes('/snap/cold/')), 'a Snap never run gets no links');
+    assert.deepEqual(ops.notes, ['cold_cold.desktop: run it once, then apply again (its Snap folder does not exist yet)', 'gone.desktop is not installed']);
 });

@@ -104,3 +104,9 @@ test('secondary and tertiary colors, with their text colors, are optional roles'
 test('a text color for an accent the palette does not have is refused', () => {
     rejects('t', { ...MIN, colors: { ...MIN.colors, 'on-secondary': '#000000' } }, 'colors.on-secondary');
 });
+
+test('an inactive border color is an optional role', () => {
+    const p = parsePalette('t', { ...MIN, colors: { ...MIN.colors, 'inactive-border': '#4A3E52' } });
+    assert.equal(p.colors['inactive-border'], '#4a3e52');
+    assert.equal(parsePalette('t', MIN).colors['inactive-border'], undefined);
+});

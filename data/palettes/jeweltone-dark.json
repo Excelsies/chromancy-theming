@@ -15,7 +15,8 @@
     "on-surface-variant": "#a99b8c",
     "outline-variant": "#6b5c77",
     "hover": "#241c2e",
-    "on-hover": "#f3eae0"
+    "on-hover": "#f3eae0",
+    "inactive-border": "#4a3e52"
   },
   "terminal": {
     "background": "#0b0910",

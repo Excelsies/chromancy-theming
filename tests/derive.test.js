@@ -92,3 +92,11 @@ test('accent pairs that are present are held to 4.5:1', () => {
     const r = resolve({ primary: '#e3c078', surface: '#0b0910', 'on-surface': '#ede4d9', tertiary: '#43e597', 'on-tertiary': '#40e090' });
     assert.ok(r.warnings.some(w => w.startsWith('on-tertiary on tertiary')), JSON.stringify(r.warnings));
 });
+
+test('the inactive border is passed through, never derived', () => {
+    const plain = resolve({ primary: '#3584e4', surface: '#1e1e1e', 'on-surface': '#ffffff' });
+    assert.equal(plain.colors['inactive-border'], undefined);
+    const given = resolve({ primary: '#3584e4', surface: '#1e1e1e', 'on-surface': '#ffffff', 'inactive-border': '#4a3e52' });
+    assert.equal(given.colors['inactive-border'], '#4a3e52');
+    assert.ok(!given.derived.includes('inactive-border'));
+});

@@ -41,6 +41,7 @@ test('Jeweltone matches its Noctalia, Hyprland and terminal definitions', () => 
     assert.deepEqual([dark.colors.primary, dark.colors.secondary, dark.colors.tertiary, dark.colors.error],
         ['#e3c078', '#b392d4', '#43e597', '#e8736b']);
     assert.equal(dark.terminal['cursor-text'], '#17120a');
+    assert.equal(dark.colors['inactive-border'], '#4a3e52', 'JEWELDIM, for unfocused window borders');
     assert.equal(dark.terminal.ansi[9], '#e8736b');
     const light = load('jeweltone-light.json');
     assert.deepEqual([light.colors.surface, light.colors['surface-container'], light.colors.hover],

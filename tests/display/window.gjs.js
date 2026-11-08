@@ -124,8 +124,10 @@ async function main(app) {
     check(win.selected?.id === 'golden-hour', 'and selects it');
     check(win._sections.dark.mineBox.get_visible() && count(win._sections.dark.mine) === 1, 'it is under "Yours" in the Dark tab');
     const yourCard = win._cardOf('golden-hour').child.get_child();
-    check(yourCard.get_first_child() instanceof Gtk.Overlay && yourCard.get_first_child().get_child()?.get_height() >= 80,
-        'your card shows its swatch, with the delete button over it');
+    // The new card is laid out on a later frame: wait for its size rather than read it at once.
+    check(yourCard.get_first_child() instanceof Gtk.Overlay &&
+        await waitFor(() => yourCard.get_first_child().get_child()?.get_height() >= 80, 2000),
+    'your card shows its swatch, with the delete button over it');
     check(win._deleteButton.get_visible(), 'a palette of your own can be deleted from the preview pane');
     await sleep(300);
     shot(win, 'palettes-yours');

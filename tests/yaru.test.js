@@ -133,3 +133,17 @@ test('text on suggested and destructive buttons follows the palette instead of Y
     assert.match(entry, /@function chromancy-text-on\(\$c\)/);
     assert.match(entry, /@return #17120a;/, 'accent buttons get on-primary');
 });
+
+test('the panel, dock and overview take the palette\'s dark color, as Yaru keeps them dark in both variants', () => {
+    const dark = shellVariables(builtin('jeweltone-dark'));
+    assert.equal(dark.yaru_panel_bg_color, '#0b0910');
+    assert.equal(dark.yaru_panel_fg_color, '#ede4d9');
+    assert.equal(dark.system_base_color, '#0b0910');
+    assert.equal(dark.system_fg_color, '#ede4d9');
+    assert.equal(dark.panel_bg_color, '#0b0910');
+    const light = shellVariables(builtin('jeweltone-light'));
+    assert.equal(light.yaru_panel_bg_color, '#1f1a24', 'the light palette\'s text color, its darkest');
+    assert.equal(light.yaru_panel_fg_color, '#f5efe6');
+    assert.equal(light.system_base_color, '#1f1a24');
+    assert.match(light.system_bg_color, /^mix\(#f5efe6, #1f1a24, 7%\)$/);
+});

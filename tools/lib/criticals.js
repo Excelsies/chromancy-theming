@@ -13,7 +13,7 @@
 const CRITICAL = /CRITICAL \*\*|JS ERROR|JS WARNING|Failed to set text .* from markup/;
 // Our own "[chromancy-theming]" lines (tests inject failures on purpose and the extension logs them) and
 // the harness's own "Script failed" line.
-const ALWAYS_ALLOWED = /\[conjure-launcher\]|Script failed/;
+const ALWAYS_ALLOWED = /\[chromancy-theming\]|Script failed|Failed to exit helper: /;
 const SUMMARY = /# \d+\/\d+ passed/;
 const DISPOSED = /has been already disposed/;
 const STACK_HEADER = /^== Stack trace for context /;

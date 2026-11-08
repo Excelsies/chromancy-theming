@@ -131,3 +131,9 @@ test('shell writes the rebuilt shell stylesheet where the helper extension loads
     assert.deepEqual(ops, [{ target: 'shell', kind: 'file', path: `/home/u/.local/share/${SHELL_STYLESHEET}`,
         content: '/* Chromancy Theming: Yaru shell theme rebuilt with the palette "Jeweltone Dark". Rewritten on every Apply. */\nstage { }' }]);
 });
+
+test('gtk4 draws separators and shades from the outline color, so they show on very dark surfaces', () => {
+    const css = gtk4.plan(builtin('jeweltone-dark'), { paths }).find(o => o.kind === 'file').content;
+    for (const v of ['card', 'popover', 'headerbar', 'sidebar', 'secondary-sidebar'])
+        assert.match(css, new RegExp(`--${v}-shade-color: #6b5c7799;`), v);
+});

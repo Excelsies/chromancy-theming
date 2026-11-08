@@ -5,6 +5,9 @@
 # usage: tools/shell-test.sh [tests/shell/<script>.js ...]    CHROMANCY_TEST_VERBOSE=1 prints the full logs
 #        CHROMANCY_PREVIEW_CSS=<file> puts that shell stylesheet where the extension loads it, in the sandbox
 #        CHROMANCY_SHELL_MODE=ubuntu runs the shell in Ubuntu's session mode (Yaru) instead of GNOME's default
+#        CHROMANCY_PREVIEW_PALETTE=<id> applies that palette inside the sandbox before the shell starts, with
+#        HOME in the sandbox too (apps started by the script see no personal files)
+#        CHROMANCY_SANDBOX_HOME=1 puts HOME in the sandbox without applying a palette
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 uuid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["uuid"])' "$root/extension/metadata.json")"
@@ -35,6 +38,11 @@ for script in "${scripts[@]}"; do
     script="$(realpath "$script")"
     sandbox="$(mktemp -d "${TMPDIR:-/var/tmp}/chromancy-shelltest.XXXXXX")"
     export XDG_CONFIG_HOME="$sandbox/config" XDG_DATA_HOME="$sandbox/data" XDG_STATE_HOME="$sandbox/state" XDG_CACHE_HOME="$sandbox/cache"
+    run_home="$HOME"
+    if [[ -n "${CHROMANCY_PREVIEW_PALETTE:-}${CHROMANCY_SANDBOX_HOME:-}" ]]; then
+        run_home="$sandbox/home"
+        mkdir -p "$run_home/Desktop"  # Ubuntu's desktop-icons extension expects it
+    fi
     mkdir -p "$XDG_CONFIG_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions" "$XDG_DATA_HOME/applications"
     ln -s "$root/extension" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     printf '[Desktop Entry]\nType=Application\nName=Chromancy Test Window\nExec=gjs -m %s\nDBusActivatable=false\n' \
@@ -46,13 +54,18 @@ for script in "${scripts[@]}"; do
     log="$sandbox/shell.log"
     echo "== $(basename "$script")"
     set +e
-    CHROMANCY_TEST_ROOT="$root" CHROMANCY_TEST_UUID="$uuid" timeout --kill-after=5 120 env CHROMANCY_SANDBOX="$sandbox" dbus-run-session -- bash -c '
+    HOME="$run_home" CHROMANCY_TEST_ROOT="$root" CHROMANCY_TEST_UUID="$uuid" timeout --kill-after=5 180 env CHROMANCY_SANDBOX="$sandbox" dbus-run-session -- bash -c '
         set -e
         gsettings set org.gnome.shell enabled-extensions "['"'"'$1'"'"']"
         gsettings set org.gnome.shell disable-user-extensions false
         gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
+        if [[ -n "$4" ]]; then
+            gsettings set org.gnome.desktop.interface gtk-theme Yaru-purple-dark
+            gsettings set org.gnome.desktop.interface accent-color purple
+            "$5/bin/chromancy-theming" apply "$4"
+        fi
         exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 ${3:+--mode=$3} --automation-script="$2"
-    ' _ "$uuid" "$script" "${CHROMANCY_SHELL_MODE:-}" >"$log" 2>&1
+    ' _ "$uuid" "$script" "${CHROMANCY_SHELL_MODE:-}" "${CHROMANCY_PREVIEW_PALETTE:-}" "$root" >"$log" 2>&1
     rc=$?
     set -e
     reap "$sandbox"

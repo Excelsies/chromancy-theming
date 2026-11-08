@@ -3,6 +3,8 @@
 # no window, its own D-Bus session, and temporary XDG config/data/state/cache directories, so the running
 # desktop, the real settings and the real files are never touched. Each script gets a fresh sandbox.
 # usage: tools/shell-test.sh [tests/shell/<script>.js ...]    CHROMANCY_TEST_VERBOSE=1 prints the full logs
+#        CHROMANCY_PREVIEW_CSS=<file> puts that shell stylesheet where the extension loads it, in the sandbox
+#        CHROMANCY_SHELL_MODE=ubuntu runs the shell in Ubuntu's session mode (Yaru) instead of GNOME's default
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 uuid="$(python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1]))["uuid"])' "$root/extension/metadata.json")"
@@ -37,6 +39,10 @@ for script in "${scripts[@]}"; do
     ln -s "$root/extension" "$XDG_DATA_HOME/gnome-shell/extensions/$uuid"
     printf '[Desktop Entry]\nType=Application\nName=Chromancy Test Window\nExec=gjs -m %s\nDBusActivatable=false\n' \
         "$root/tests/shell/fixtures/test-window.js" > "$XDG_DATA_HOME/applications/io.github.excelsies.ChromancyTheming.TestWindow.desktop"
+    if [[ -n "${CHROMANCY_PREVIEW_CSS:-}" ]]; then
+        mkdir -p "$XDG_DATA_HOME/chromancy-theming/shell"
+        cp "$CHROMANCY_PREVIEW_CSS" "$XDG_DATA_HOME/chromancy-theming/shell/gnome-shell.css"
+    fi
     log="$sandbox/shell.log"
     echo "== $(basename "$script")"
     set +e
@@ -45,8 +51,8 @@ for script in "${scripts[@]}"; do
         gsettings set org.gnome.shell enabled-extensions "['"'"'$1'"'"']"
         gsettings set org.gnome.shell disable-user-extensions false
         gsettings set org.gnome.shell welcome-dialog-last-shown-version "999"
-        exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 --automation-script="$2"
-    ' _ "$uuid" "$script" >"$log" 2>&1
+        exec gnome-shell --headless --wayland --no-x11 --virtual-monitor 1600x1000 ${3:+--mode=$3} --automation-script="$2"
+    ' _ "$uuid" "$script" "${CHROMANCY_SHELL_MODE:-}" >"$log" 2>&1
     rc=$?
     set -e
     reap "$sandbox"

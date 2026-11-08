@@ -11,9 +11,9 @@ import { resolvePalette } from '../../lib/derive.js';
 import { parseSource } from '../../lib/yaru.js';
 import { contrast } from '../../lib/color.js';
 
-// Budget: the 50 built-in palettes take about 1.8 s each to build (GTK 3 and shell), 90 s one at a time
-// here and on CI. Four at a time, the whole test takes about 27 s here; 120 s catches a hang and leaves
-// room for a slow runner.
+// Budget: the 50 built-in palettes take about 0.9 s each to build (GTK 3 and shell), 45 s one at a time.
+// Four at a time, the whole test takes about 16 s here; 120 s catches a hang and leaves room for a slow
+// runner.
 const TIMEOUT_S = 120;
 GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, TIMEOUT_S, () => {
     printerr(`FAIL: still running after ${TIMEOUT_S} s`);
@@ -151,6 +151,19 @@ try {
     message = e.message;
 }
 check(/sassc failed/.test(message), 'a failing compile reports the compiler\'s message');
+
+// The GTK 3 theme and its images build at the same time: when the theme fails, the build reports it only
+// after the images are done, so nothing is still writing into the work directory.
+const failing = work('failing-gtk3');
+message = '';
+try {
+    await buildGtk3(resolvePalette(parsePalette('jeweltone-dark', JSON.parse(read(`${palettesDir}/jeweltone-dark.json`)))),
+        { vendorDir, workDir: failing, program: 'false' });
+} catch (e) {
+    message = e.message;
+}
+check(/false failed/.test(message) && GLib.file_test(`${failing}/text-select-end-active@2.png`, GLib.FileTest.EXISTS),
+    `a failed GTK 3 theme is reported once the images are done (${message.split('\n')[0]})`);
 
 spawn(['rm', '-rf', tmp]);
 for (const r of results)

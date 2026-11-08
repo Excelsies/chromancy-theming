@@ -10,7 +10,7 @@ data/palettes/*.json ─┐                                   ┌─ ~/.config/g
   theming/palettes/  ─┘  (palette.js) (derive.js)  plan()  ├─ ~/.local/share/chromancy-theming/shell/
                                                     │      │     └─ loaded by the shell extension
                                        app/yaruBuild.js    ├─ GSettings (style, fonts, Ptyxis, ...)
-                                         (sassc, rsvg)     └─ INI keys, overrides, app config files
+                                         (sassc, librsvg)  └─ INI keys, overrides, app config files
                                                     │
                                      lib/applier.js + lib/ledger.js  (baseline first, then write)
 ```
@@ -124,7 +124,7 @@ Built with Yaru's own values (`palette: null`), the output is byte-for-byte the 
 
 GTK 3 also draws twelve images with the accent: the active slider marks and text selection handles.
 They are recolored the way Yaru's own build does it. Theme colors in `assets.svg` become placeholder
-colors, the placeholders become the palette's colors, and `rsvg-convert` renders each image at the
+colors, the placeholders become the palette's colors, and librsvg renders each image in process at the
 installed size into `~/.local/share/chromancy-theming/gtk-3.0/assets/`. Every other image is loaded
 from the installed Yaru theme through `resource://` URLs.
 
@@ -168,8 +168,11 @@ the user's own.
 1. skips the target when its app is blacklisted (and restores what it wrote before);
 2. runs `inspect`; a missing app is `skipped`;
 3. reads the lock; a lock that is on, or that cannot be read, is `locked`, and nothing is written;
-4. runs the Yaru build, if the target has one, in a temporary directory;
-5. calls `plan` and collects the operations.
+4. starts the Yaru build, if the target has one, in a temporary directory;
+5. once the build is done, calls `plan` and collects the operations.
+
+The GTK 3 and shell builds run at the same time, and within the GTK 3 build the theme compiles while
+its images are drawn. Results are reported in target order either way.
 
 A target that fails before planning is reported and left exactly as it was; the others go ahead. All
 the operations then go to `lib/applier.js` in one call.

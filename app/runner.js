@@ -102,13 +102,18 @@ function readGtkTheme() {
  *   locked or failed before planning (subject "target")
  */
 export async function applyPalette(palette, targetIds, ctx) {
-    const results = [];
     const ops = [];
     const planned = [];
     const work = GLib.dir_make_tmp('chromancy-build-XXXXXX');
     const planCtx = { paths: ctx.paths, gtkTheme: ctx.gtkTheme ?? readGtkTheme() };
+    // Each target's results, in target order, whichever build finishes first.
+    const slots = [];
+    const ready = [];
     try {
+        // First pass: check each target and start its build; the builds run at the same time.
         for (const target of TARGETS.filter(t => targetIds.includes(t.id))) {
+            const results = [];
+            slots.push(results);
             const fail = (status, error) => results.push({ target: target.id, subject: 'target', status, error });
             const targetCtx = { ...ctx, system };
             const blacklistedApp = Object.entries(APP_TARGETS).find(([app, t]) => t === target.id && (ctx.blacklist ?? []).includes(app));
@@ -144,15 +149,25 @@ export async function applyPalette(palette, targetIds, ctx) {
                     continue;
                 }
             }
-            let built;
+            let build = Promise.resolve({ value: undefined });
+            if (target.build) {
+                const dir = `${work}/${target.id}`;
+                GLib.mkdir_with_parents(dir, 0o700);
+                // Settled, so a failed build is reported in the second pass rather than left unhandled. The
+                // builders are async functions, so even a failure before their first await arrives here.
+                build = BUILDERS[target.build](palette, { vendorDir: ctx.vendorDir, workDir: dir, gtkTheme: planCtx.gtkTheme })
+                    .then(value => ({ value }), error => ({ error }));
+            }
+            ready.push({ target, info, results, fail, build });
+        }
+        // Second pass, in target order: each target is planned once its build is done.
+        for (const { target, info, results, fail, build } of ready) {
             try {
-                if (target.build) {
-                    const dir = `${work}/${target.id}`;
-                    GLib.mkdir_with_parents(dir, 0o700);
-                    built = await BUILDERS[target.build](palette, { vendorDir: ctx.vendorDir, workDir: dir, gtkTheme: planCtx.gtkTheme });
-                    if (built.assetsWarning)
-                        results.push({ target: target.id, subject: 'images', status: 'skipped', error: built.assetsWarning });
-                }
+                const { value: built, error } = await build;
+                if (error)
+                    throw error;
+                if (built?.assetsWarning)
+                    results.push({ target: target.id, subject: 'images', status: 'skipped', error: built.assetsWarning });
                 const planned_ = target.plan(palette, { ...planCtx, info }, built);
                 ops.push(...planned_);
                 for (const note of planned_.notes ?? [])
@@ -169,8 +184,10 @@ export async function applyPalette(palette, targetIds, ctx) {
             }
         }
         const applied = await apply(ops, { system, ledgerPath: ctx.ledgerPath, targets: planned });
-        return { results: [...results, ...applied.results] };
+        return { results: [...slots.flat(), ...applied.results] };
     } finally {
+        // No build may still be writing into the work directory when it is removed.
+        await Promise.all(ready.map(r => r.build));
         GLib.spawn_sync(null, ['rm', '-rf', work], null, GLib.SpawnFlags.SEARCH_PATH, null);
     }
 }

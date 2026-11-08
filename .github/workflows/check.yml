@@ -13,6 +13,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglib2.0-bin gjs sassc librsvg2-bin gsettings-desktop-schemas
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglib2.0-bin gjs gir1.2-rsvg-2.0 sassc gsettings-desktop-schemas
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check

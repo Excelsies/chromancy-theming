@@ -3,6 +3,7 @@
 // With `palette: null` it builds Yaru's own dark purple theme, which must equal the installed one;
 // the tests use that to prove the pipeline.
 
+import Cairo from 'cairo';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {
@@ -97,26 +98,51 @@ function installedSize(gtkTheme, file) {
     }
 }
 
+/** librsvg's bindings, or null where they are not installed. */
+async function loadRsvg() {
+    try {
+        return (await import('gi://Rsvg?version=2.0')).default;
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Renders Yaru's accent images (ACCENT_ASSETS, at 1x and @2) the way Yaru's build does: assets.svg with
  * the theme colors swapped for placeholders, the placeholders filled from the compiled color table, each
- * image rendered from its element (rsvg-convert; Yaru's build uses Inkscape) at the installed image's size.
+ * image rendered from its element (librsvg, in process; Yaru's build uses Inkscape) at the installed
+ * image's size, stretched to it as rsvg-convert -w -h does.
  * @returns {Promise<{assets: Record<string, string>, assetsWarning?: string}>} file name -> PNG, base64
  */
 async function renderAccentAssets(entry, { vendorDir, workDir, includes, dark, gtkTheme }) {
-    if (!GLib.find_program_in_path('rsvg-convert'))
-        return { assets: {}, assetsWarning: 'rsvg-convert is not installed (sudo apt install librsvg2-bin), so the 12 accent images keep Yaru\u2019s colors' };
+    const Rsvg = await loadRsvg();
+    if (!Rsvg)
+        return { assets: {}, assetsWarning: 'librsvg\u2019s bindings are not installed (sudo apt install gir1.2-rsvg-2.0), so the 12 accent images keep Yaru\u2019s colors' };
     write(`${workDir}/colors-entry.scss`, entry);
     const colors = parseYaruColors(await sassc(`${workDir}/colors-entry.scss`, `${workDir}/colors.css`, includes));
-    write(`${workDir}/assets.svg`, colorizeSvg(dummySvg(read(`${vendorDir}/gtk/src/default/gtk-3.0/assets.svg`), dark), colors));
+    const svg = new TextEncoder().encode(colorizeSvg(dummySvg(read(`${vendorDir}/gtk/src/default/gtk-3.0/assets.svg`), dark), colors));
+    let handle;
+    try {
+        handle = Rsvg.Handle.new_from_data(svg);
+    } catch (e) {
+        throw new YaruBuildError(`the accent images could not be read: ${e.message}`);
+    }
     const assets = {};
     for (const id of ACCENT_ASSETS) {
+        const [found, ink] = handle.get_geometry_for_element(`#${id}`);
+        if (!found || !(ink.width > 0 && ink.height > 0))
+            throw new YaruBuildError(`assets.svg has no image ${id}`);
         for (const scale of [1, 2]) {
             const file = `${id}${scale === 2 ? '@2' : ''}.png`;
-            const size = installedSize(gtkTheme, file);
+            const size = installedSize(gtkTheme, file) ?? { width: Math.ceil(ink.width * scale), height: Math.ceil(ink.height * scale) };
+            const surface = new Cairo.ImageSurface(Cairo.Format.ARGB32, size.width, size.height);
+            const cr = new Cairo.Context(surface);
+            cr.scale(size.width / ink.width, size.height / ink.height);
+            handle.render_element(cr, `#${id}`, new Rsvg.Rectangle({ x: 0, y: 0, width: ink.width, height: ink.height }));
+            cr.$dispose();
             const out = `${workDir}/${file}`;
-            await runTool(['rsvg-convert', `--export-id=${id}`, ...(size ? ['-w', `${size.width}`, '-h', `${size.height}`] : ['-z', `${scale}`]),
-                '-f', 'png', '-o', out, `${workDir}/assets.svg`]);
+            surface.writeToPNG(out);
+            surface.finish();
             assets[file] = GLib.base64_encode(GLib.file_get_contents(out)[1]);
         }
     }
@@ -157,10 +183,18 @@ export async function buildGtk3(palette, { vendorDir, workDir, gtkTheme, program
     }
     write(`${workDir}/gtk3-entry.scss`, entry);
     const common = prepareCommon(vendorDir, workDir);
-    const css = await sassc(`${workDir}/gtk3-entry.scss`, `${workDir}/gtk3.css`, [common, copy], { program });
-    // The color table is the same entry with Yaru's color definitions in place of the theme.
+    // The color table is the same entry with Yaru's color definitions in place of the theme. The theme and
+    // the images build at the same time; both are waited for, so nothing is still running if one fails.
     const colorsEntry = entry.split(entryPoint).join(`${common}/yaru-colors-defs.scss`);
-    return { css, ...await renderAccentAssets(colorsEntry, { vendorDir, workDir, includes: [common, copy], dark, gtkTheme }) };
+    const [css, images] = await Promise.allSettled([
+        sassc(`${workDir}/gtk3-entry.scss`, `${workDir}/gtk3.css`, [common, copy], { program }),
+        renderAccentAssets(colorsEntry, { vendorDir, workDir, includes: [common, copy], dark, gtkTheme }),
+    ]);
+    for (const r of [css, images]) {
+        if (r.status === 'rejected')
+            throw r.reason;
+    }
+    return { css: css.value, ...images.value };
 }
 
 /**

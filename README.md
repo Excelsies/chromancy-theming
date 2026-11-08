@@ -27,18 +27,19 @@ Jeweltone Dark and Jeweltone Light, two of the 50 built-in palettes:
 - GNOME Shell 50 on Ubuntu 26.04 with the Yaru theme (the GTK 3 and shell themes are rebuilt from
   Yaru's source).
 - `gjs` and libadwaita 1.9 (`gir1.2-adw-1`), which Ubuntu's desktop already has.
-- `sassc` and `rsvg-convert` (`librsvg2-bin`), to rebuild Yaru with a palette.
+- `sassc`, to rebuild Yaru with a palette, and librsvg's bindings (`gir1.2-rsvg-2.0`, which GNOME Shell
+  already needs), to redraw its accent images.
 - `bwrap` (`bubblewrap`), to keep blacklisted apps out of the theme.
 - Optional: `qt6ct`, for Qt apps.
 
 ```sh
-sudo apt install gjs gir1.2-adw-1 sassc librsvg2-bin bubblewrap qt6ct
+sudo apt install gjs gir1.2-adw-1 gir1.2-rsvg-2.0 sassc bubblewrap qt6ct
 ```
 
 Or through PackageKit's `pkgcli`, which asks for authorization itself instead of needing `sudo`:
 
 ```sh
-pkgcli install gjs gir1.2-adw-1 sassc librsvg2-bin bubblewrap qt6ct
+pkgcli install gjs gir1.2-adw-1 gir1.2-rsvg-2.0 sassc bubblewrap qt6ct
 ```
 
 ## Installation

@@ -5,7 +5,8 @@ GTK 3 apps, the GNOME Shell menus and panel, Qt and Flatpak apps, and the config
 their own colors, such as terminals. It keeps Ubuntu's Yaru look and changes its colors, and Restore puts
 everything back as it was.
 
-It runs from a checkout of this repository; it is not packaged or published anywhere.
+It is distributed through [GitHub releases](https://github.com/Excelsies/chromancy-theming/releases), not
+through an app store or a package repository.
 
 ## Screenshots
 
@@ -42,48 +43,61 @@ pkgcli install gjs gir1.2-adw-1 sassc librsvg2-bin bubblewrap qt6ct
 
 ## Installation
 
-1. Clone the repository somewhere it can stay. The launcher and the shell extension point into the
-   checkout, so moving or deleting it breaks both.
+Chromancy runs from its own folder: the launcher, the shell extension and the blacklist's launchers point
+into it, so put it somewhere it can stay. Nothing is installed outside your home directory and nothing
+needs `sudo` (beyond the requirements above).
+
+1. **From a release:** download `chromancy-theming-<version>.tar.gz` from the
+   [latest release](https://github.com/Excelsies/chromancy-theming/releases/latest) (or with
+   `gh release download -R Excelsies/chromancy-theming -p '*.tar.gz'`), then extract it and install:
+
+   ```sh
+   mkdir -p ~/.local/opt
+   tar -xzf chromancy-theming-*.tar.gz -C ~/.local/opt
+   ~/.local/opt/chromancy-theming/tools/install.sh
+   ```
+
+   **From a checkout** instead (for development):
 
    ```sh
    git clone git@github.com:Excelsies/chromancy-theming.git ~/Apps/chromancy-theming
-   cd ~/Apps/chromancy-theming
+   ~/Apps/chromancy-theming/tools/install.sh
    ```
 
-2. Install the launcher and link the shell extension:
+   `tools/install.sh` writes `~/.local/share/applications/io.github.excelsies.ChromancyTheming.desktop`
+   and links `~/.local/share/gnome-shell/extensions/chromancy-theming@excelsies` to the folder's
+   `extension/`. Run from another folder later, it points both there instead.
 
-   ```sh
-   tools/install.sh
-   ```
-
-   This writes `~/.local/share/applications/io.github.excelsies.ChromancyTheming.desktop` and links
-   `~/.local/share/gnome-shell/extensions/chromancy-theming@excelsies` to `extension/`. No `sudo`, and
-   nothing outside your home directory.
-
-3. Log out and back in, so GNOME Shell finds the new extension, then enable it:
+2. Log out and back in, so GNOME Shell finds the new extension, then enable it:
 
    ```sh
    gnome-extensions enable chromancy-theming@excelsies
    ```
 
    The extension loads the shell theme and powers **Pick a Window** on the Blacklist page. Everything
-   else works without it; the window shows a banner while it is not running.
+   else works without it, but the panel, menus and notifications then keep their stock colors; the
+   window shows a banner while it is not running.
 
-4. Open **Chromancy Theming** from the app grid, pick a palette and press **Apply**.
+3. Open **Chromancy Theming** from the app grid, pick a palette and press **Apply**.
 
-Without the extension, the panel, menus and notifications keep their stock colors.
+The command line used below is `bin/chromancy-theming` in that folder
+(`~/.local/opt/chromancy-theming/bin/chromancy-theming` for a release install).
 
 ### Updating
 
+From a release, replace the folder with the new one:
+
 ```sh
-cd ~/Apps/chromancy-theming
-git pull
+rm -rf ~/.local/opt/chromancy-theming
+tar -xzf chromancy-theming-*.tar.gz -C ~/.local/opt
 ```
 
-Then press **Apply** again (or run `bin/chromancy-theming apply <palette>`), so the rebuilt themes pick up
-the changes. A change to the extension takes effect at the next login.
+From a checkout, `git pull`. Either way, press **Apply** again so the rebuilt themes pick up the changes; a
+change to the extension takes effect at the next login.
 
 ### Uninstalling
+
+From the Chromancy folder:
 
 ```sh
 bin/chromancy-theming restore      # put every file and setting back as it was
@@ -91,7 +105,7 @@ gnome-extensions disable chromancy-theming@excelsies
 tools/install.sh --remove          # the launcher and the extension link
 ```
 
-Then delete the checkout. `~/.config/chromancy-theming` (your palettes, templates and settings) and
+Then delete the folder. `~/.config/chromancy-theming` (your palettes, templates and settings) and
 `~/.local/state/chromancy-theming` (what Restore needs) can be deleted after the restore.
 
 ## Usage
@@ -252,14 +266,17 @@ pnpm run test:shell     # the extension in a headless GNOME Shell
 pnpm run test:cli       # the command line against a temporary home
 ```
 
-The display, shell and CLI suites need `weston` (`sudo apt install weston`) and run in a sandbox: their own
-D-Bus session, runtime directory, XDG directories and settings, so the running desktop is never touched.
+The display suite needs `weston` (`sudo apt install weston`). The display, shell, CLI and package checks
+run in a sandbox: their own D-Bus session, runtime directory, XDG directories and settings, so the running
+desktop is never touched.
 CI runs `pnpm run check`.
 
 - `tools/ui-preview.sh <out-dir> <palette>...` saves screenshots of real apps and the shell views with
   each palette next to stock, from a headless shell.
 - `tools/screenshots.sh` regenerates `docs/screenshots/`. The apps in it still reach the system bus, so
   look over the images before committing them.
+- `pnpm run pack` builds the release tarball in `dist/` from the committed tree, and
+  `pnpm run test:package` builds it and checks it the way a user installs it, in a temporary home.
 - `tools/update-yaru.sh <commit> <debian-version>` replaces `vendor/yaru/` when Ubuntu's Yaru changes; the
   build tests then check the rebuild still matches the installed theme.
 

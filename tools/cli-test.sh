@@ -6,7 +6,9 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 tmp=$(mktemp -d -t chromancy-cli-XXXXXX)
 trap 'rm -rf "$tmp"' EXIT
-GSETTINGS_BACKEND=memory XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" XDG_STATE_HOME="$tmp/state" \
+# A private runtime dir: the session's helpers (gvfs, portals) keep their sockets and mounts there.
+mkdir -m 700 "$tmp/runtime"
+XDG_RUNTIME_DIR="$tmp/runtime" GSETTINGS_BACKEND=memory XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" XDG_STATE_HOME="$tmp/state" \
 timeout 120 dbus-run-session -- bash -c '
     fails=0
     expect() { local want=$1; shift; "$@" >/dev/null 2>&1; local got=$?

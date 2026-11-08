@@ -11,7 +11,9 @@
     "check": "pnpm run lint && pnpm test && pnpm run test:gjs",
     "test:display": "tools/display-test.sh",
     "test:shell": "tools/shell-test.sh",
-    "test:cli": "tools/cli-test.sh"
+    "test:cli": "tools/cli-test.sh",
+    "pack": "tools/pack.sh",
+    "test:package": "tools/pack.sh && tools/package-check.sh"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -26,6 +26,11 @@ Keywords=theme;colors;palette;accent;fonts;
 StartupNotify=true
 DBusActivatable=false
 DESKTOP
-[[ -e "$ext" ]] || ln -s "$root/extension" "$ext"
+# A link from an earlier install (a checkout, or a release extracted elsewhere) is pointed here.
+if [[ -L "$ext" || ! -e "$ext" ]]; then
+    ln -sfn "$root/extension" "$ext"
+else
+    echo "warning: $ext is not a link; left as it is" >&2
+fi
 echo "installed $entry"
 echo "extension: $ext -> $(readlink "$ext")"

@@ -147,3 +147,31 @@ test('the panel, dock and overview take the palette\'s dark color, as Yaru keeps
     assert.equal(light.system_base_color, '#1f1a24');
     assert.match(light.system_bg_color, /^mix\(#f5efe6, #1f1a24, 7%\)$/);
 });
+
+test('the accent images are the ones Yaru draws with its accent placeholder', async () => {
+    const { ACCENT_ASSETS } = await import('../lib/yaru.js');
+    assert.equal(ACCENT_ASSETS.length, 12);
+    const index = vendor('gtk/src/default/gtk-3.0/assets.txt').split('\n');
+    for (const id of ACCENT_ASSETS)
+        assert.ok(index.includes(id), `${id} is in assets.txt`);
+    const svg = vendor('gtk/src/default/gtk-3.0/assets.svg');
+    for (const id of ACCENT_ASSETS)
+        assert.ok(svg.includes(`id="${id}"`), `${id} is in assets.svg`);
+});
+
+test('the sprite sheet gets Yaru\'s placeholders, then the compiled colors', async () => {
+    const { dummySvg, colorizeSvg, parseYaruColors } = await import('../lib/yaru.js');
+    const svg = '<a fill="#e95420"/><b fill="#3465a4"/><c fill="#33393b"/><d fill="#eeeeec"/>';
+    assert.equal(dummySvg(svg, true), '<a fill="#00ff01"/><b fill="#00ff03"/><c fill="#ffff00"/><d fill="#eeeeec"/>');
+    assert.equal(dummySvg(svg, false), '<a fill="#00ff01"/><b fill="#00ff03"/><c fill="#33393b"/><d fill="#ffff00"/>');
+    const colors = parseYaruColors('* {\n  -yaru-bg-color: #0b0910;\n  -yaru-accent-bg-color: #e3c078;\n  -yaru-accent-color: #e5c584;\n  -yaru-border-color: rgba(0, 0, 0, 0.5); }\n');
+    assert.deepEqual(colors, { 'bg-color': '#0b0910', 'accent-bg-color': '#e3c078', 'accent-color': '#e5c584', 'border-color': 'rgba(0, 0, 0, 0.5)' });
+    assert.equal(colorizeSvg(dummySvg(svg, true), colors), '<a fill="#e3c078"/><b fill="#e5c584"/><c fill="#0b0910"/><d fill="#eeeeec"/>');
+});
+
+test('a PNG\'s size is read from its header', async () => {
+    const { pngSize } = await import('../lib/yaru.js');
+    const header = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 20, 0, 0, 0, 25]);
+    assert.deepEqual(pngSize(header), { width: 20, height: 25 });
+    assert.equal(pngSize(new Uint8Array([1, 2, 3])), null);
+});

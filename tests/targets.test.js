@@ -247,3 +247,18 @@ test('a user template writes to the path its first line names, only inside home'
     assert.throws(() => userTemplates.plan(builtin('jeweltone-dark'), { paths,
         info: { home: '/home/u', templates: [{ name: 'bad.tmpl', text: 'chromancy-output: ~/x\n{{nope}}' }] } }), /bad\.tmpl: unknown placeholder nope/);
 });
+
+test('gtk3 writes the recolored accent images and points only those at them', async () => {
+    const { gtk3 } = await import('../lib/targets/gtk3.js');
+    const built = { css: 'a { b: -gtk-scaled(url("assets/text-select-end-active.png"), url("assets/text-select-end-active@2.png")); c: url("assets/check-symbolic.svg"); }',
+        assets: { 'text-select-end-active.png': 'AAAA', 'text-select-end-active@2.png': 'BBBB' } };
+    const ops = gtk3.plan(builtin('jeweltone-dark'), { paths: { ...paths, data: '/home/u/.local/share' }, gtkTheme: 'Yaru-purple-dark' }, built);
+    const images = ops.filter(o => o.encoding === 'base64');
+    assert.deepEqual(images.map(o => [o.path, o.content]), [
+        ['/home/u/.local/share/chromancy-theming/gtk-3.0/assets/text-select-end-active.png', 'AAAA'],
+        ['/home/u/.local/share/chromancy-theming/gtk-3.0/assets/text-select-end-active@2.png', 'BBBB']]);
+    const css = ops.find(o => o.path.endsWith('chromancy-theming.css')).content;
+    assert.match(css, /url\("file:\/\/\/home\/u\/\.local\/share\/chromancy-theming\/gtk-3\.0\/assets\/text-select-end-active\.png"\)/);
+    assert.match(css, /url\("file:\/\/\/home\/u\/\.local\/share\/chromancy-theming\/gtk-3\.0\/assets\/text-select-end-active%402\.png"\)/, '"@" is escaped in the URL');
+    assert.match(css, /url\("resource:\/\/\/com\/ubuntu\/themes\/Yaru-purple-dark\/3\.0\/assets\/check-symbolic\.svg"\)/);
+});

@@ -69,7 +69,9 @@ async function main(app) {
 
     let results = await win.applySelected();
     const statuses = results.map(r => `${r.target}:${r.status}`);
-    check(results.length === 6 && results.every(r => r.status === 'applied'), `Apply applies every target (${statuses.join(', ')})`);
+    const images = results.filter(r => r.subject.includes('/gtk-3.0/assets/'));
+    check(results.length - images.length === 6 && images.length === 24 && results.every(r => r.status === 'applied'),
+        `Apply applies every target, with the 24 GTK 3 accent images (${statuses.length} results)`);
     check(read(`${ctx.paths.config}/gtk-4.0/chromancy-theming.css`)?.includes('#e3c078'), 'the GTK 4 stylesheet is written');
     check(config()?.applied === 'jeweltone-dark', 'the applied palette is remembered');
     const details = win.showResults(results);

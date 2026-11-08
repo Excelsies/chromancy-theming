@@ -32,6 +32,12 @@ export function memoryEnv() {
                 throw ioError('write', path);
             files.set(path, text);
         },
+        async readBase64(path) {
+            return this.readText(path);
+        },
+        async writeBase64(path, data) {
+            return this.writeText(path, data);
+        },
         async remove(path) {
             if (brokenWrite.has(path))
                 throw ioError('remove', path);

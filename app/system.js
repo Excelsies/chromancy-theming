@@ -101,7 +101,27 @@ export const system = {
         }
     },
 
+    /** @returns {Promise<string | null>} the file's bytes as base64, or null when it does not exist */
+    async readBase64(path) {
+        try {
+            const [bytes] = await Gio.File.new_for_path(path).load_contents_async(null);
+            return GLib.base64_encode(bytes);
+        } catch (e) {
+            if (e.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+                return null;
+            throw e;
+        }
+    },
+
+    async writeBase64(path, data) {
+        await this._writeBytes(path, GLib.base64_decode(data));
+    },
+
     async writeText(path, text) {
+        await this._writeBytes(path, new TextEncoder().encode(text));
+    },
+
+    async _writeBytes(path, bytes) {
         const file = resolveLinks(path);
         try {
             file.get_parent().make_directory_with_parents(null);
@@ -109,15 +129,14 @@ export const system = {
             if (!e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.EXISTS))
                 throw e;
         }
-        if (text === '') {
+        if (bytes.length === 0) {
             // replace_contents_bytes_async never completes for an empty buffer (GIO asserts on it),
             // so an empty file goes through a replace stream closed with nothing written.
             const stream = await file.replace_async(null, false, Gio.FileCreateFlags.NONE, GLib.PRIORITY_DEFAULT, null);
             await stream.close_async(GLib.PRIORITY_DEFAULT, null);
             return;
         }
-        await file.replace_contents_bytes_async(new GLib.Bytes(new TextEncoder().encode(text)), null, false,
-            Gio.FileCreateFlags.NONE, null);
+        await file.replace_contents_bytes_async(new GLib.Bytes(bytes), null, false, Gio.FileCreateFlags.NONE, null);
     },
 
     async remove(path) {

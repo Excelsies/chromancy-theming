@@ -23,13 +23,17 @@ if (!GLib.file_test(`/usr/share/themes/${THEME}/gtk-3.0/gtk.gresource`, GLib.Fil
 }
 const read = p => new TextDecoder().decode(GLib.file_get_contents(p)[1]);
 const palette = resolvePalette(parsePalette('jeweltone-dark', JSON.parse(read(`${root}/data/palettes/jeweltone-dark.json`))));
-const built = await buildGtk3(palette, { vendorDir: `${root}/vendor/yaru`, workDir: `${tmp}/build` });
+const built = await buildGtk3(palette, { vendorDir: `${root}/vendor/yaru`, workDir: `${tmp}/build`, gtkTheme: THEME });
 
 function draw(mode) {
     const config = `${tmp}/${mode}/config`;
+    const data = `${tmp}/${mode}/data`;
     GLib.mkdir_with_parents(`${config}/gtk-3.0`, 0o700);
-    for (const op of gtk3.plan(palette, { paths: { config }, gtkTheme: THEME }, built)) {
-        if (op.kind === 'file')
+    for (const op of gtk3.plan(palette, { paths: { config, data }, gtkTheme: THEME }, built)) {
+        GLib.mkdir_with_parents(GLib.path_get_dirname(op.path), 0o700);
+        if (op.kind === 'file' && op.encoding === 'base64')
+            GLib.file_set_contents(op.path, GLib.base64_decode(op.content));
+        else if (op.kind === 'file')
             GLib.file_set_contents(op.path, op.content);
         else if (mode === 'applied')
             GLib.file_set_contents(op.path, withLine('', op.line));

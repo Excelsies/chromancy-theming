@@ -138,7 +138,9 @@ export async function applyPalette(palette, targetIds, ctx) {
                 if (target.build) {
                     const dir = `${work}/${target.id}`;
                     GLib.mkdir_with_parents(dir, 0o700);
-                    built = await BUILDERS[target.build](palette, { vendorDir: ctx.vendorDir, workDir: dir });
+                    built = await BUILDERS[target.build](palette, { vendorDir: ctx.vendorDir, workDir: dir, gtkTheme: planCtx.gtkTheme });
+                    if (built.assetsWarning)
+                        results.push({ target: target.id, subject: 'images', status: 'skipped', error: built.assetsWarning });
                 }
                 ops.push(...target.plan(palette, { ...planCtx, info }, built));
                 planned.push(target.id);

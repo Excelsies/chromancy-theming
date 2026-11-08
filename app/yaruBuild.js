@@ -6,8 +6,8 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {
-    YaruBuildError, gtk3Entry, gtk3Variables, markDefaults, patchGtk3ButtonText, patchSassUtils, preprocessShellScss, replaceShellAccent,
-    shellEntry, shellVariables,
+    ACCENT_ASSETS, YaruBuildError, colorizeSvg, dummySvg, gtk3Entry, gtk3Variables, markDefaults, parseYaruColors,
+    patchGtk3ButtonText, patchSassUtils, pngSize, preprocessShellScss, replaceShellAccent, shellEntry, shellVariables,
 } from '../lib/yaru.js';
 
 Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async');
@@ -50,12 +50,19 @@ function prepareCommon(vendorDir, workDir) {
 
 /** Runs sassc; resolves to the CSS or throws YaruBuildError with the compiler's own message. */
 export async function sassc(entry, out, includes, { program = 'sassc', timeoutS = SASSC_TIMEOUT_S } = {}) {
-    const argv = [program, '-a', ...includes.flatMap(i => ['-I', i]), entry, out];
+    await runTool([program, '-a', ...includes.flatMap(i => ['-I', i]), entry, out], { timeoutS,
+        missing: `install it with: sudo apt install sassc` });
+    return read(out);
+}
+
+/** Runs a program to completion; throws YaruBuildError with its own message when it fails. */
+async function runTool(argv, { timeoutS = SASSC_TIMEOUT_S, missing = '' } = {}) {
+    const program = argv[0];
     let proc;
     try {
         proc = Gio.Subprocess.new(argv, Gio.SubprocessFlags.STDOUT_SILENCE | Gio.SubprocessFlags.STDERR_PIPE);
     } catch (e) {
-        throw new YaruBuildError(`cannot run ${program}: ${e.message} (install it with: sudo apt install sassc)`);
+        throw new YaruBuildError(`cannot run ${program}: ${e.message}${missing ? ` (${missing})` : ''}`);
     }
     let timedOut = false;
     const timer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, timeoutS, () => {
@@ -76,15 +83,53 @@ export async function sassc(entry, out, includes, { program = 'sassc', timeoutS 
         const message = (stderr ?? '').split('\n').filter(l => l.trim() && !/^(DEBUG|DEPRECATION)/.test(l)).slice(0, 12);
         throw new YaruBuildError(`${program} failed: ${message.join('\n')}`);
     }
-    return read(out);
+}
+
+/** The size of an installed Yaru image, from the theme's resource bundle, or null. */
+function installedSize(gtkTheme, file) {
+    if (!gtkTheme)
+        return null;
+    try {
+        const resource = Gio.Resource.load(`/usr/share/themes/${gtkTheme}/gtk-3.0/gtk.gresource`);
+        return pngSize(resource.lookup_data(`/com/ubuntu/themes/${gtkTheme}/3.0/assets/${file}`, 0).toArray());
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Renders Yaru's accent images (ACCENT_ASSETS, at 1x and @2) the way Yaru's build does: assets.svg with
+ * the theme colors swapped for placeholders, the placeholders filled from the compiled color table, each
+ * image rendered from its element (rsvg-convert; Yaru's build uses Inkscape) at the installed image's size.
+ * @returns {Promise<{assets: Record<string, string>, assetsWarning?: string}>} file name -> PNG, base64
+ */
+async function renderAccentAssets(entry, { vendorDir, workDir, includes, dark, gtkTheme }) {
+    if (!GLib.find_program_in_path('rsvg-convert'))
+        return { assets: {}, assetsWarning: 'rsvg-convert is not installed (sudo apt install librsvg2-bin), so the 12 accent images keep Yaru\u2019s colors' };
+    write(`${workDir}/colors-entry.scss`, entry);
+    const colors = parseYaruColors(await sassc(`${workDir}/colors-entry.scss`, `${workDir}/colors.css`, includes));
+    write(`${workDir}/assets.svg`, colorizeSvg(dummySvg(read(`${vendorDir}/gtk/src/default/gtk-3.0/assets.svg`), dark), colors));
+    const assets = {};
+    for (const id of ACCENT_ASSETS) {
+        for (const scale of [1, 2]) {
+            const file = `${id}${scale === 2 ? '@2' : ''}.png`;
+            const size = installedSize(gtkTheme, file);
+            const out = `${workDir}/${file}`;
+            await runTool(['rsvg-convert', `--export-id=${id}`, ...(size ? ['-w', `${size.width}`, '-h', `${size.height}`] : ['-z', `${scale}`]),
+                '-f', 'png', '-o', out, `${workDir}/assets.svg`]);
+            assets[file] = GLib.base64_encode(GLib.file_get_contents(out)[1]);
+        }
+    }
+    return { assets };
 }
 
 /**
  * @param {object | null} palette a resolved palette, or null for Yaru's own dark purple theme
- * @param {{vendorDir: string, workDir: string, program?: string}} ctx
- * @returns {Promise<{css: string}>}
+ * @param {{vendorDir: string, workDir: string, gtkTheme?: string, program?: string}} ctx gtkTheme: the
+ *   installed Yaru theme whose image sizes the rendered images match
+ * @returns {Promise<{css: string, assets: Record<string, string>, assetsWarning?: string}>}
  */
-export async function buildGtk3(palette, { vendorDir, workDir, program }) {
+export async function buildGtk3(palette, { vendorDir, workDir, gtkTheme, program }) {
     const srcDir = `${vendorDir}/gtk/src/default/gtk-3.0`;
     const copy = `${workDir}/gtk3`;
     for (const rel of listFiles(srcDir, isScss))
@@ -113,7 +158,9 @@ export async function buildGtk3(palette, { vendorDir, workDir, program }) {
     write(`${workDir}/gtk3-entry.scss`, entry);
     const common = prepareCommon(vendorDir, workDir);
     const css = await sassc(`${workDir}/gtk3-entry.scss`, `${workDir}/gtk3.css`, [common, copy], { program });
-    return { css };
+    // The color table is the same entry with Yaru's color definitions in place of the theme.
+    const colorsEntry = entry.split(entryPoint).join(`${common}/yaru-colors-defs.scss`);
+    return { css, ...await renderAccentAssets(colorsEntry, { vendorDir, workDir, includes: [common, copy], dark, gtkTheme }) };
 }
 
 /**

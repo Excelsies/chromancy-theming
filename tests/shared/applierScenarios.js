@@ -312,4 +312,18 @@ export const scenarios = [
             t.deepEqual(await system.readSetting(a), { value: 'Jeweltone', userSet: true });
         },
     },
+    {
+        name: 'a binary file (base64) is written and restored like a text one',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==';
+            await env.seedFile(env.path('old.css'), 'x');
+            const op = { target: 'gtk3', kind: 'file', encoding: 'base64', path: env.path('a.png'), content: png };
+            t.deepEqual(status(await apply([op], { system, ledgerPath })), ['applied']);
+            t.equal(await system.readBase64(env.path('a.png')), png);
+            t.deepEqual(status(await apply([op], { system, ledgerPath })), ['unchanged']);
+            await restore({ system, ledgerPath });
+            t.equal(await system.readBase64(env.path('a.png')), null);
+        },
+    },
 ];

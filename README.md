@@ -34,6 +34,12 @@ Jeweltone Dark and Jeweltone Light, two of the 50 built-in palettes:
 sudo apt install gjs gir1.2-adw-1 sassc librsvg2-bin bubblewrap qt6ct
 ```
 
+Or through PackageKit's `pkgcli`, which asks for authorization itself instead of needing `sudo`:
+
+```sh
+pkgcli install gjs gir1.2-adw-1 sassc librsvg2-bin bubblewrap qt6ct
+```
+
 ## Installation
 
 1. Clone the repository somewhere it can stay. The launcher and the shell extension point into the

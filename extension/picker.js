@@ -9,7 +9,7 @@ import GLib from 'gi://GLib';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-export const PICK_TIMEOUT_S = 30;
+const PICK_TIMEOUT_S = 30;
 
 export class PickError extends Error {
     /** @param {'busy' | 'cancelled' | 'timeout' | 'no-app'} code */
@@ -23,7 +23,7 @@ export class PickError extends Error {
 const PICKABLE = [Meta.WindowType.NORMAL, Meta.WindowType.DIALOG, Meta.WindowType.MODAL_DIALOG, Meta.WindowType.UTILITY];
 
 /** The topmost pickable window at stage coordinates, or null. */
-export function windowAt(x, y) {
+function windowAt(x, y) {
     const actors = global.get_window_actors().slice().reverse();
     for (const actor of actors) {
         const win = actor.get_meta_window();

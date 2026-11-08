@@ -5,7 +5,7 @@ import { applyBlacklist, applyPalette, loadConfig, loadPalettes, restoreTargets,
 import { withFonts } from '../lib/config.js';
 import { TARGETS } from '../lib/targets/index.js';
 
-export const USAGE = `usage: chromancy-theming list
+const USAGE = `usage: chromancy-theming list
        chromancy-theming apply <palette> [--targets=<id>,...]   (default: the targets enabled in the app)
        chromancy-theming restore [<target>...]
        chromancy-theming blacklist [add|remove <app-id>]   (app ids as in org.gnome.Nautilus.desktop)

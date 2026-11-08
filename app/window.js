@@ -13,7 +13,8 @@ import { FONT_ROLES } from '../lib/palette.js';
 import { TARGETS } from '../lib/targets/index.js';
 import { PaletteEditor } from './editor.js';
 import { applyBlacklist, applyPalette, deletePalette, loadConfig, loadPalettes, restoreTargets, saveConfig, savePalette } from './runner.js';
-import { ScopedCss, allCardsCss, paletteCard, previewCss, previewWidget } from './widgets.js';
+import { previewCss } from '../lib/previewCss.js';
+import { ScopedCss, allCardsCss, paletteCard, previewWidget } from './widgets.js';
 
 const TARGET_DESCRIPTIONS = {
     style: 'GNOME’s light or dark style, from the palette',

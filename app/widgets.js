@@ -3,7 +3,7 @@
 import Gdk from 'gi://Gdk?version=4.0';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { cardCss, previewCss } from '../lib/previewCss.js';
+import { cardCss } from '../lib/previewCss.js';
 
 /** A CSS provider for the display whose rules can be replaced. */
 export class ScopedCss {
@@ -116,8 +116,6 @@ export function previewWidget() {
     return root;
 }
 
-/** CSS for the preview of one palette. */
-export { previewCss };
 
 /** #rrggbb from a Gdk.RGBA. */
 export function rgbaToHex(rgba) {

@@ -10,9 +10,9 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { ShellTheme } from './shellTheme.js';
 import { PickError, Picker } from './picker.js';
 
-export const OBJECT_PATH = '/io/github/excelsies/ChromancyTheming/Shell';
-export const INTERFACE = 'io.github.excelsies.ChromancyTheming.Shell';
-export const ERROR_DOMAIN = 'io.github.excelsies.ChromancyTheming.Error';
+const OBJECT_PATH = '/io/github/excelsies/ChromancyTheming/Shell';
+const INTERFACE = 'io.github.excelsies.ChromancyTheming.Shell';
+const ERROR_DOMAIN = 'io.github.excelsies.ChromancyTheming.Error';
 
 const XML = `<node>
   <interface name="${INTERFACE}">

@@ -12,7 +12,7 @@ import {
 
 Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async');
 
-export const SASSC_TIMEOUT_S = 60;
+const SASSC_TIMEOUT_S = 60;
 
 const decoder = new TextDecoder();
 const read = path => decoder.decode(GLib.file_get_contents(path)[1]);

@@ -9,7 +9,7 @@ import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-export const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 250;
 
 export class ShellTheme {
     /** @param {{path: string, log: (msg: string) => void}} opts */

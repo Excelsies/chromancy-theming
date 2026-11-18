@@ -6,6 +6,8 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { applyPalette, defaultContext, loadPalettes, restoreTargets } from '../../app/runner.js';
+import { system } from '../../app/system.js';
+import { omnimux } from '../../lib/targets/omnimux.js';
 
 if (GLib.getenv('GSETTINGS_BACKEND') !== 'memory') {
     printerr('refusing to run: set GSETTINGS_BACKEND=memory');
@@ -58,7 +60,10 @@ if (has('ptyxis'))
 write(`${ctx.userTemplates}/kitty.tmpl`, 'chromancy-output: ~/.config/kitty/chromancy.conf\nbackground {{term-background}}\nforeground {{term-foreground}}\n');
 
 const { palettes } = loadPalettes(ctx);
-const targets = ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates'];
+// OmniMux counts as installed once its home exists.
+check(!(await omnimux.inspect({ ...ctx, system })).available, 'OmniMux: skipped before it has run');
+GLib.mkdir_with_parents(`${home}/.omnimux`, 0o700);
+const targets = ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'omnimux', 'templates'];
 let r = await applyPalette(palettes.get('jeweltone-dark'), targets, ctx);
 const by = t => r.results.filter(x => x.target === t);
 lines.push(`# ${r.results.map(x => `${x.target}:${x.status}`).join(', ')}`);
@@ -91,6 +96,8 @@ if (has('gnome-text-editor')) {
     check(new Gio.Settings({ schema_id: 'org.gnome.TextEditor' }).get_string('style-scheme') === 'chromancy-theming', 'Text Editor: scheme selected');
 }
 check(read(`${home}/.config/kitty/chromancy.conf`) === 'background #0b0910\nforeground #ede4d9\n', 'your template: written where its first line says');
+const omnimuxFile = () => JSON.parse(read(`${ctx.paths.config}/omnimux/theme-override.json`) ?? 'null');
+check(omnimuxFile()?.primary === '#e3c078' && omnimuxFile()?.terminal?.background === '#0b0910', 'OmniMux: its theme file written, with the terminal colors');
 
 // A palette without terminal colors skips the terminal apps but still themes the rest.
 r = await applyPalette(palettes.get('noctalia'), targets, ctx);
@@ -98,6 +105,7 @@ check(['ptyxis', 'btop', 'text-editor'].filter(has.bind(null)).length === 0
     || r.results.filter(x => ['ptyxis', 'btop', 'text-editor'].includes(x.target) && x.subject === 'target').every(x => x.status === 'skipped'),
     'a palette without terminal colors skips the terminal apps');
 check(conjureSettings.get_string('theme-primary') === palettes.get('noctalia').colors.primary, 'and still themes Conjure');
+check(omnimuxFile()?.primary === palettes.get('noctalia').colors.primary && omnimuxFile()?.terminal === undefined, 'and OmniMux, which works out its own terminal colors');
 if (has('ptyxis')) {
     const profile = new Gio.Settings({ schema_id: 'org.gnome.Ptyxis.Profile', path: '/org/gnome/Ptyxis/Profiles/test-profile/' });
     check(profile.get_user_value('palette') === null && read(`${ctx.paths.data}/org.gnome.Ptyxis/palettes/Chromancy-jeweltone-dark.palette`) === null,
@@ -126,6 +134,7 @@ if (has('qt6ct')) {
 if (has('btop'))
     check(read(`${ctx.paths.config}/btop/btop.conf`).includes('color_theme = "jeweltone"'), 'btop back to the user\'s theme');
 check(read(`${home}/.config/kitty/chromancy.conf`) === null, 'the template output is gone');
+check(read(`${ctx.paths.config}/omnimux/theme-override.json`) === null, 'OmniMux\'s theme file is gone');
 
 GLib.spawn_sync(null, ['rm', '-rf', tmp], null, GLib.SpawnFlags.SEARCH_PATH, null);
 for (const l of lines)

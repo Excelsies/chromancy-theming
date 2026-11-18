@@ -37,4 +37,5 @@ test('blacklisting the terminal or editor turns off their own targets', () => {
     assert.equal(APP_TARGETS['org.gnome.Ptyxis.desktop'], 'ptyxis');
     assert.equal(APP_TARGETS['org.gnome.TextEditor.desktop'], 'text-editor');
     assert.equal(APP_TARGETS['btop.desktop'], 'btop');
+    assert.equal(APP_TARGETS['omnimux.desktop'], 'omnimux');
 });

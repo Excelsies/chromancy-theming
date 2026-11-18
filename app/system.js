@@ -69,6 +69,8 @@ export function schemaKeys(schema, schemaDir) {
 export const system = {
     schemaKeys: async (schema, schemaDir) => schemaKeys(schema, schemaDir),
     hasProgram: async name => GLib.find_program_in_path(name) !== null,
+    /** Whether anything (a file, a directory, a link's target) is at the path. */
+    exists: async path => GLib.file_test(path, GLib.FileTest.EXISTS),
 
     /** The *.tmpl files in a directory, as {name, text}; none when it does not exist. */
     async listTemplates(dir) {

@@ -16,6 +16,7 @@ const FAKE_INFO = {
     ptyxis: { profilePath: '/org/gnome/Ptyxis/Profiles/x/', template: 'Background={{term-background}}' },
     btop: { template: 'theme[main_fg]="{{term-foreground}}"' },
     'text-editor': { template: '<x c="{{ansi1}}"/>' },
+    omnimux: {},
     templates: { home: '/home/u', templates: [{ name: 'a.tmpl', text: 'chromancy-output: ~/.config/a.conf\nfg={{on-surface}}' }] },
     blacklist: { home: '/home/u', wrapper: '/app/bin/chromancy-theming-unthemed', gtkCss: { '3.0': null, '4.0': null },
         apps: [{ id: 'a.desktop', kind: 'host', dbus: false, desktop: '[Desktop Entry]\nExec=a\n' }] },
@@ -219,6 +220,38 @@ test('the terminal apps fill their templates and select the result', async () =>
     const te = textEditor.plan(p, { paths: { ...paths, data: '/d' }, info: FAKE_INFO['text-editor'] });
     assert.equal(te[0].path, '/d/gtksourceview-5/styles/chromancy-theming.xml');
     assert.deepEqual([te[1].key, te[1].value], ['style-scheme', 'chromancy-theming']);
+});
+
+test('OmniMux gets one JSON file of roles, with the terminal colors only when the palette has them', async () => {
+    const { omnimux } = await import('../lib/targets/omnimux.js');
+    const p = builtin('jeweltone-dark');
+    const [op, ...rest] = omnimux.plan(p, { paths, info: FAKE_INFO.omnimux });
+    assert.equal(rest.length, 0);
+    assert.deepEqual([op.target, op.kind, op.path], ['omnimux', 'file', `${paths.config}/omnimux/theme-override.json`]);
+    const file = JSON.parse(op.content);
+    assert.equal(file.source, 'Chromancy Theming: Jeweltone Dark');
+    assert.equal(file.variant, 'dark');
+    assert.deepEqual([file.primary, file.surface, file['on-surface']], [p.colors.primary, p.colors.surface, p.colors['on-surface']]);
+    assert.equal(file.terminal.background, p.terminal.background);
+    assert.equal(file.terminal.ansi11, p.terminal.ansi[11]);
+    assert.ok(!Object.keys(file).some(k => k.endsWith('.hex') || /^(ansi\d+|term-.*|name|id)$/.test(k)), Object.keys(file).join(', '));
+    const plain = JSON.parse(omnimux.plan(builtin('noctalia'), { paths, info: FAKE_INFO.omnimux })[0].content);
+    assert.equal(plain.terminal, undefined, 'a palette without terminal colors leaves them to OmniMux');
+    assert.equal(plain.variant, builtin('noctalia').variant);
+});
+
+test('every built-in palette gives OmniMux valid colors', async () => {
+    const { omnimux } = await import('../lib/targets/omnimux.js');
+    const { readdirSync } = await import('node:fs');
+    const ids = readdirSync(new URL('../data/palettes/', import.meta.url)).map(f => f.replace(/\.json$/, ''));
+    assert.equal(ids.length, 50);
+    for (const id of ids) {
+        const file = JSON.parse(omnimux.plan(builtin(id), { paths, info: {} })[0].content);
+        const colors = [...Object.entries(file).filter(([k]) => !['source', 'variant', 'terminal'].includes(k)),
+            ...Object.entries(file.terminal ?? {})];
+        assert.ok(colors.length > 0 && colors.every(([, v]) => /^#[0-9a-f]{6}$/i.test(v)), `${id}: ${JSON.stringify(file)}`);
+        assert.ok(['dark', 'light'].includes(file.variant), id);
+    }
 });
 
 test('a palette without terminal colors is skipped by the terminal apps, not failed', async () => {

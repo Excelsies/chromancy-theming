@@ -120,6 +120,21 @@ export const scenarios = [
         },
     },
     {
+        name: 'a second write of one subject in an Apply fails, and the first writer keeps the subject',
+        async run(env, t) {
+            const { system, ledgerPath } = env;
+            const r = await apply([fileOp(env, 'o.json', 'first', 'omnimux'), fileOp(env, 'o.json', 'second', 'templates')],
+                { system, ledgerPath, targets: ['omnimux', 'templates'] });
+            t.deepEqual(status(r), ['applied', 'failed']);
+            t.ok(/omnimux target/.test(r.results[1].error ?? ''), `the failure names the first writer (${r.results[1].error})`);
+            t.equal(await system.readText(env.path('o.json')), 'first');
+            const back = await restore({ system, ledgerPath, targets: ['templates'] });
+            t.deepEqual(back.results, [], 'the subject is not the second writer\'s to restore');
+            await restore({ system, ledgerPath, targets: ['omnimux'] });
+            t.equal(await system.readText(env.path('o.json')), null, 'the first writer restores it');
+        },
+    },
+    {
         name: 'an unreadable current value fails that op without writing it',
         async run(env, t) {
             const { system, ledgerPath } = env;

@@ -152,6 +152,7 @@ Each line of output names a target, a status (`applied`, `unchanged`, `restored`
 | `ptyxis` | A palette of its own, selected in Ptyxis's default profile |
 | `btop` | A theme, selected in `btop.conf` |
 | `text-editor` | A style scheme for Text Editor's writing area, from the terminal colors |
+| `omnimux` | OmniMux's colors, in `~/.config/omnimux/theme-override.json`, with the terminal colors when the palette has them |
 | `templates` | Your own templates (below) |
 | `blacklist` | Keeps the apps on the blacklist out of the theme (below) |
 
@@ -160,7 +161,9 @@ Snap apps read the same `gtk.css` as the rest, so the `gtk4` and `gtk3` targets 
 A target whose app is not installed is skipped. Ptyxis, btop and Text Editor need the palette's terminal
 colors; with a palette that has none they go back to how they were before Chromancy. Conjure Launcher has
 a switch that keeps other apps from changing its theme; while it is on, the `conjure` target reports
-`locked` and changes nothing. In the window, `conjure` and `plaid` share one **Shell extensions** switch.
+`locked` and changes nothing. OmniMux counts as installed once it has run (its `~/.omnimux` folder
+exists); its own **Allow external themes** setting decides whether it uses the file. In the window,
+`conjure` and `plaid` share one **Shell extensions** switch, and `omnimux` is the **Other apps** switch.
 
 Chromancy sets colors directly, so any accent works. It does not change GNOME's own accent-color setting.
 
@@ -209,7 +212,7 @@ A blacklisted app keeps its own colors from its next start:
 - a Flatpak app is denied the GTK stylesheet folders (`~/.local/share/flatpak/overrides/<app-id>`);
 - a Snap app's own `gtk.css` links point at a copy of your `gtk.css` without Chromancy's line (the Snap
   must have run once first);
-- Ptyxis, btop and Text Editor keep their own colors: their targets are skipped.
+- Ptyxis, btop, Text Editor and OmniMux keep their own colors: their targets are skipped.
 
 Taking an app off the blacklist, or Restore, removes all of it.
 
@@ -233,7 +236,8 @@ Every color has a name: `{{primary}}`, `{{on-primary}}`, `{{surface}}`, `{{surfa
 `.hex` for the value without `#` (`{{primary.hex}}`). `{{name}}`, `{{id}}` and `{{variant}}` are the
 palette's name, its id and `dark` or `light`. A color the palette leaves out falls back to a related one.
 An unknown name, or a terminal color with a palette that has none, stops the `templates` target with an
-error, and none of your templates is written.
+error, and none of your templates is written. A template whose output is a file a target already writes
+(OmniMux's theme file, for example) fails for that file, and the target's version is kept.
 
 ## Restore and your own changes
 
@@ -249,7 +253,8 @@ read, Chromancy refuses to apply or restore rather than guess.
 - GNOME Shell 50 and Yaru only: the GTK 3 and shell themes are rebuilt from the Yaru source in
   `vendor/yaru/`, which matches the version Ubuntu 26.04 installs. With a GTK theme other than Yaru, the
   `gtk3` target fails and the others still apply.
-- Open apps keep their colors until they restart. Qt apps need a new login after the first Apply, for
+- Open apps keep their colors until they restart, except OmniMux, which reads its file again within about
+  a second. Qt apps need a new login after the first Apply, for
   `QT_QPA_PLATFORMTHEME`.
 - Snap apps cannot read files in `~/.local/share`, so Snap GTK 3 apps do not show the few Yaru images
   that are recolored with the accent.

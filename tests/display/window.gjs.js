@@ -68,12 +68,14 @@ async function main(app) {
     check(win._variantStack.get_visible_child_name() === 'light', 'selecting a light palette shows the Light tab');
     shot(win, 'palettes-light');
     const groupedRows = win._targetRows.length;
-    check(groupedRows === 13 && win._targetRows.some(r => r.ids.join() === 'conjure,plaid' && r.row.get_title() === 'Shell extensions'),
+    check(groupedRows === 14 && win._targetRows.some(r => r.ids.join() === 'conjure,plaid' && r.row.get_title() === 'Shell extensions'),
         `Apply To shows the shell extensions as one switch (${groupedRows} switches)`);
+    check(win._targetRows.some(r => r.ids.join() === 'omnimux' && r.row.get_title() === 'Other apps'),
+        'and OmniMux under the general Other apps title');
     check(await waitFor(() => win._banner.get_revealed(), 4000), 'with no shell extension running, the banner says so');
 
     // The checks below are about the desktop targets; the others have their own test (targets.gjs.js).
-    for (const id of ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'templates', 'blacklist'])
+    for (const id of ['flatpak', 'qt', 'conjure', 'plaid', 'ptyxis', 'btop', 'text-editor', 'omnimux', 'templates', 'blacklist'])
         await win.setTarget(id, false);
     win.select('jeweltone-dark');
     await sleep(300);

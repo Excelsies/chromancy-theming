@@ -155,6 +155,7 @@ from the installed Yaru theme through `resource://` URLs.
 | `ptyxis` | A palette file `Chromancy-<id>.palette`, selected in the default profile. Each palette gets its own file because a running Ptyxis does not reload a palette file it has already loaded |
 | `btop` | `~/.config/btop/themes/chromancy-theming.theme`, selected with `color_theme` in `btop.conf` |
 | `text-editor` | A GtkSourceView style scheme built from the terminal colors, selected in Text Editor's settings |
+| `omnimux` | `~/.config/omnimux/theme-override.json`: the color roles under their own names, the variant, a display name and, when the palette has them, the terminal colors under `terminal`. Available once `~/.omnimux` exists |
 | `templates` | Each `~/.config/chromancy-theming/templates/*.tmpl` filled by `lib/template.js` and written to the path on its first line, which must be inside the home directory |
 | `blacklist` | See below |
 
@@ -203,6 +204,8 @@ The applier's rules:
   written.
 - An operation whose subject already has the wanted state is `unchanged` and is not written.
 - A failed operation fails alone, and its result names the subject and the error.
+- A subject written twice in one Apply (a user template aimed at a target's file) fails the second
+  write; the first target keeps the subject and its ledger entry.
 - An Apply also restores the subjects its targets wrote before and no longer write. For example, a
   palette without fonts after one with fonts puts the fonts back.
 - Restore returns each subject to its baseline even if something changed it since, and reports that it
@@ -227,7 +230,7 @@ and the `blacklist` target writes it, so restore and un-blacklisting remove ever
 - **Flatpak apps.** A per-app override denies `xdg-config/gtk-4.0` and `xdg-config/gtk-3.0`.
 - **Snap apps.** The Snap's own `gtk.css` links point at a copy of the user's `gtk.css` without
   Chromancy's line. The Snap must have run once, so the links exist.
-- **Ptyxis, btop and Text Editor.** Their own target is skipped, so they keep their colors.
+- **Ptyxis, btop, Text Editor and OmniMux.** Their own target is skipped, so they keep their colors.
 
 ## Settings
 

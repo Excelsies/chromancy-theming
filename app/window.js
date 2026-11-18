@@ -35,6 +35,7 @@ const SHELL_INTERFACE = 'io.github.excelsies.ChromancyTheming.Shell';
 const TARGET_GROUPS = [
     { ids: ['conjure', 'plaid'], title: 'Shell extensions',
         subtitle: 'Extensions that take their colors from Chromancy, such as launchers and window borders' },
+    { ids: ['omnimux'], title: 'Other apps', subtitle: 'Apps that read their colors from a file Chromancy writes' },
 ];
 const groupOf = id => TARGET_GROUPS.find(g => g.ids.includes(id));
 /** The title a target is shown under. */
